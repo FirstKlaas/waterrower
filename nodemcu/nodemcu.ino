@@ -1,14 +1,17 @@
-/*S
- Basic MQTT example 
- 
-  - connects to an MQTT server
-  - publishes "hello world" to the topic "outTopic"
-  - subscribes to the topic "inTopic"
+/*
+ Basic WaterRower MQTT Sketch 
+
+  
+  @author: Klaas Nebuhr
+  @created: 2016-09-25
 */
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
-const char* ssid     = "xxxxxxxxx";
+/*  You have to adapt the values for the  
+ *  ssid and password of course.
+ */
+const char* ssid     = "xxxxxxxxx";      
 const char* password = "xxxxxxxxxxxxxx";
 
 const int ROWER_PIN = 4;
@@ -17,44 +20,68 @@ volatile unsigned long tick = 0;
 volatile unsigned long lasttick = 0;
 volatile float meter_per_second = 0.0;
 volatile unsigned long seconds = 0;
+
+/**
+ * 4.805 ticks (interrupts) is equal to one meter.
+ */
 const float ratio = 4.805;
 
-volatile long lastDebounceTime = 0;  // the last time the output pin was toggled
-const unsigned long debounceDelay = 20;
-const float STOP_SPEED = 0.1;
+volatile long lastDebounceTime = 0;           // the last time the output pin was toggled in millis
+const unsigned long debounceDelay = 20;       // Duration in millis to ignore interrupts
+const float STOP_SPEED = 0.1;                 // If speed gets below this value, measuring stops.
 volatile unsigned long last_stop_time;
-const unsigned long minimal_downtime = 1000;
+const unsigned long minimal_downtime = 1000;  // Waterrower has to be at least this amount of millis
+                                              // slower than STOP_SPEED before a new session can start.
 volatile boolean measuring_running = false;
 volatile boolean send_zero_values = true;
  
-char message[20];
+char message[20];                             // Buffer for the message
 
-// Update these with values suitable for your network.
+/** 
+ * Update these with values suitable for your network. 
+ */
 IPAddress server(192, 168, 1, 115);
 PubSubClient client(server);
 
-
-
-boolean is_measuring() {
+/*
+ * true if measuring currently is running, false else.
+ * If not measuring, no values will be published to 
+ * the mqtt server.
+ */
+inline boolean is_measuring() {
   return measuring_running; 
 }
 
-void start_measuring() {
+/**
+ * Activates measuring. If not already measuring, this 
+ * also resets internal variables for measurement.
+ */
+inline void start_measuring() {
   measuring_running = true;
   reset();
-  //Serial.println("Start Measurement");
 }
 
+/**
+ * Stops the measurement.
+ */
 void stop_measuring() {
   measuring_running = false;
   send_zero_values = true;
   meter_per_second = 0.0;
   last_stop_time = millis();
-  //reset();
-  //Serial.println("Stop Measurement");
-  //client.publish("/waterrower/data","0;0;0;0");
 }
 
+/**
+ * This is the callback method for the
+ * MQTT Server. It gets called, whenever
+ * the controller receives a message
+ * from the MQTT server. It gets only messages
+ * for toppics subscribed to.
+ * 
+ * Currently there's only one action. If the 
+ * payload String equals "reset", the measuring
+ * stops. This was only for testing.
+ */
 void callback(const MQTT::Publish& pub) {
   // handle message arrived
   String s = pub.payload_string();

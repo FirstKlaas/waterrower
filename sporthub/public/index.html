@@ -12,9 +12,29 @@
 		language="javascript" type="text/javascript" 
 		src="https://code.jquery.com/jquery-3.1.1.min.js">		
 	</script>
-	<script 
-		language="javascript" type="text/javascript">
-		$().ready(function() {
+	<script language="javascript" type="text/javascript">
+
+        function senden(){
+            // Eingabefelder auslesen
+            var name = $('#name').val();
+            var text = $('#text').val();
+            // Socket senden
+            socket.emit('chat', { name: name, text: text });
+            // Text-Eingabe leeren
+            $('#text').val('');
+        }
+        // bei einem Klick
+
+        function getUser(id) {
+
+            console.log('Klick');
+            $.getJSON("/user/1", function (data) {
+                console.log(JSON.stringify(data));
+                $('#name').val(data.user.firstname + ' ' + data.user.lastname);
+            })
+        }
+
+        $().ready(function() {
 			// WebSocket
 		    var socket = io.connect();
 		    // neue Nachricht
@@ -35,20 +55,10 @@
 		                $('<span>').text(data.text))
 		        );
 		        // nach unten scrollen
-		        $('body').scrollTop($('body')[0].scrollHeight);
+		        // $('body').scrollTop($('body')[0].scrollHeight);
 		    });
 		    // Nachricht senden
-		    function senden(){
-		        // Eingabefelder auslesen
-		        var name = $('#name').val();
-		        var text = $('#text').val();
-		        // Socket senden
-		        socket.emit('chat', { name: name, text: text });
-		        // Text-Eingabe leeren
-		        $('#text').val('');
-		    }
-		    // bei einem Klick
-		    $('#senden').click(senden);
+		    $('#senden').click(getUser(1));
 		    // oder mit der Enter-Taste
 		    $('#text').keypress(function (e) {
 		        if (e.which == 13) {
@@ -87,7 +97,7 @@
 	<div class="cell page-center">
 		<input id="name" type="text" placeholder="dein Name" />
         <input id="text" type="text" placeholder="schreibe etwas..." />
-        <input id="senden" type="submit" value="senden" />
+        <div id="senden" >senden</div>
     </div>
 	<div class="cell page-right"></div>	
 </div>

@@ -1,4 +1,5 @@
 {
 	"port": 8080,
-	"static_dir" : "public" 
+	"static_dir" : "public",
+	"database" : "db/sporthub.db"
 }

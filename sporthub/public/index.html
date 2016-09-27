@@ -58,7 +58,9 @@
 		        // $('body').scrollTop($('body')[0].scrollHeight);
 		    });
 		    // Nachricht senden
-		    $('#senden').click(getUser(1));
+		    $('#senden').click(function () {
+                getUser(1);
+            });
 		    // oder mit der Enter-Taste
 		    $('#text').keypress(function (e) {
 		        if (e.which == 13) {
@@ -95,9 +97,9 @@
 <div class="page-footer row">
 	<div class="cell page-left"></div>
 	<div class="cell page-center">
-		<input id="name" type="text" placeholder="dein Name" />
-        <input id="text" type="text" placeholder="schreibe etwas..." />
-        <div id="senden" >senden</div>
+		<input id="name" type="text" placeholder="Your login" />
+        <input id="text" type="text" placeholder="Tell us something ..." />
+        <button id="senden" >Senden</button>
     </div>
 	<div class="cell page-right"></div>	
 </div>

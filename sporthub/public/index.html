@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Welcome to the Sportsserver</title>
+	<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro" rel="stylesheet">
+	<script 
+		language="javascript" type="text/javascript" 
+		src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js">		
+	</script>	
+	<script 
+		language="javascript" type="text/javascript" 
+		src="https://code.jquery.com/jquery-3.1.1.min.js">		
+	</script>
+	<script 
+		language="javascript" type="text/javascript">
+		$().ready(function() {
+			// WebSocket
+		    var socket = io.connect();
+		    // neue Nachricht
+		    socket.on('chat', function (data) {
+		        var zeit = new Date(data.zeit);
+		        $('#content').append(
+		            $('<li></li>').append(
+		                // Uhrzeit
+		                $('<span>').text('[' +
+		                    (zeit.getHours() < 10 ? '0' + zeit.getHours() : zeit.getHours())
+		                    + ':' +
+		                    (zeit.getMinutes() < 10 ? '0' + zeit.getMinutes() : zeit.getMinutes())
+		                    + '] '
+		                ),
+		                // Name
+		                $('<b>').text(typeof(data.name) != 'undefined' ? data.name + ': ' : ''),
+		                // Text
+		                $('<span>').text(data.text))
+		        );
+		        // nach unten scrollen
+		        $('body').scrollTop($('body')[0].scrollHeight);
+		    });
+		    // Nachricht senden
+		    function senden(){
+		        // Eingabefelder auslesen
+		        var name = $('#name').val();
+		        var text = $('#text').val();
+		        // Socket senden
+		        socket.emit('chat', { name: name, text: text });
+		        // Text-Eingabe leeren
+		        $('#text').val('');
+		    }
+		    // bei einem Klick
+		    $('#senden').click(senden);
+		    // oder mit der Enter-Taste
+		    $('#text').keypress(function (e) {
+		        if (e.which == 13) {
+		            senden();
+		        }
+		    });
+			
+		});
+	</script>	
+	<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="page-head row">
+	<div class="cell page-left" style="vertical-align: middle; text-align: center;">
+		<svg width="150" height="150">
+    		<image xlink:href="media/svg/logo.svg" src="svg.png" width="150" height="150"/>
+		</svg>
+	</div>
+	<div class="cell page-center" style="vertical-align: top;">
+		<h1>Welcome</h1>
+		<h2>Sportsdevice Homepage</h2>
+	</div>
+	<div class="cell page-right"></div>
+</div>
+<div class="page-body row">
+	<div class="cell page-left"></div>
+	<div class="cell page-center">
+		<div class="inner">
+			Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+		</div>
+	</div>
+	<div class="cell page-right"></div>
+</div>
+<div class="page-footer row">
+	<div class="cell page-left"></div>
+	<div class="cell page-center">
+		<input id="name" type="text" placeholder="dein Name" />
+        <input id="text" type="text" placeholder="schreibe etwas..." />
+        <input id="senden" type="submit" value="senden" />
+    </div>
+	<div class="cell page-right"></div>	
+</div>
+</body>
+</html>

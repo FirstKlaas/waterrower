@@ -6,10 +6,6 @@ const conf = require('./config.json');
 const sqlite3 = require('sqlite3').verbose();
 const mqtt = require('mqtt');
 
-// webserver
-// auf den Port x schalten
-server.listen(conf.port);
-
 var db = new sqlite3.Database(conf.database);
 
 // Statische Files aus diesem Pfad ausliefern
@@ -22,7 +18,7 @@ app.get('/', function (req, res) {
 });
 
 app.get('/user', function (req, res) {
-    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Type", conf.json_content_type);
     db.all("SELECT * FROM user", function (err, rows) {
         res.json({ "users" : rows });
     });
@@ -47,6 +43,10 @@ io.sockets.on('connection', function (socket) {
 		io.sockets.emit('chat', { zeit: new Date(), name: data.name || 'Anonym', text: data.text });
 	});
 });
+
+// webserver
+// auf den Port x schalten
+server.listen(conf.port);
 
 // Portnummer in die Konsole schreiben
 console.log('Der Server läuft nun unter http://127.0.0.1:' + conf.port + '/');

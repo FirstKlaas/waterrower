@@ -1,5 +1,6 @@
 {
 	"port": 8080,
 	"static_dir" : "public",
-	"database" : "db/sporthub.db"
+	"database" : "db/sporthub.db",
+    "json_content_type" : "application/json"
 }

@@ -17,16 +17,34 @@ app.get('/', function (req, res) {
 	res.sendFile(__dirname + '/public/index.html');
 });
 
-app.get('/user', function (req, res) {
+app.get('/opp', function (req, res) {
     res.setHeader("Content-Type", conf.json_content_type);
-    db.all("SELECT * FROM user", function (err, rows) {
-        res.json({ "users" : rows });
+    db.all("SELECT * FROM opportunities", function (err, rows) {
+        res.json({ "user" : rows });
+    });
+});
+
+Date.prototype.getFiscalYear = function() {
+    var y = this.getFullYear()-2000;
+    return this.getMonth() > 4 ? y+1 : y;
+}
+
+app.get('/opp/:fyear/:status', function(req, res) {
+    res.setHeader("Content-Type", "application/json");
+    var now = new Date();
+    var month = now.getMonth();
+    var year  = now.getFiscalYear();
+    console.log('Month: ' + month);
+    console.log('Year: ' + year);
+
+    db.all("SELECT id, company, name, contact FROM opportunities WHERE report_fiscal_year=? AND report_month=? AND probability>0.2 AND status_code=? AND fiscal_year=? ORDER BY company ASC", [year, month, req.params.status,req.params.fyear], function (err, rows) {
+        res.json(rows);
     });
 });
 
 app.get('/user/:id', function (req, res) {
     res.setHeader("Content-Type", "application/json");
-    db.get("SELECT * FROM user WHERE id=?", [req.params.id], function (err, row) {
+    db.get("SELECT * FROM opportunities WHERE id=?", [req.params.id], function (err, row) {
         res.json({ "user" : row });
     });
 });

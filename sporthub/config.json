@@ -1,6 +1,6 @@
 {
-	"port": 8080,
+	"port": 9090,
 	"static_dir" : "public",
-	"database" : "db/sporthub.db",
+	"database" : "db/opportunities.db",
     "json_content_type" : "application/json"
 }

@@ -23,6 +23,8 @@ BODY {
 
 .page-left {
 	width:200px;
+    vertical-align: top;
+    border-right: 1px solid white;
 }
 
 .page-right {
@@ -79,4 +81,42 @@ H2{
 	font-size: 0.8em;
 	color: #999;
 }
+
+#react {
+    padding: 0px 0px;
+    font-size: 1.2em;
+    font-weight: lighter;
+    color: white;
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+
+.opp-table {
+	display: table;
+	width: 100%;
+}
+
+.opp-table UL {
+	display: table-row;
+}
+
+.opp-table UL LI {
+	display: table-cell;
+	font-size: 0.7em;
+	font-weight: 100;
+	border-bottom: 0.5px solid aliceblue;
+    padding: 8px 15px;
+}
+
+.opp-table UL LI:HOVER {
+    color:#3b84c0;
+    background-color: aliceblue;
+    cursor: pointer;
+}
+
+.opp-table UL LI B {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
 

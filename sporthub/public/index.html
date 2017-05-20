@@ -12,64 +12,13 @@
 		language="javascript" type="text/javascript" 
 		src="https://code.jquery.com/jquery-3.1.1.min.js">		
 	</script>
-	<script language="javascript" type="text/javascript">
+    <script src="https://unpkg.com/react@15.3.2/dist/react.js"></script>
+    <script src="https://unpkg.com/react-dom@15.3.2/dist/react-dom.js"></script>
+    <script src="https://unpkg.com/babel-core@5.8.38/browser.min.js"></script>
+    <script src="https://unpkg.com/jquery@3.1.0/dist/jquery.min.js"></script>
+    <script src="https://unpkg.com/remarkable@1.6.2/dist/remarkable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/pubsubjs/1.4.2/pubsub.min.js"></script>
 
-        function senden(){
-            // Eingabefelder auslesen
-            var name = $('#name').val();
-            var text = $('#text').val();
-            // Socket senden
-            socket.emit('chat', { name: name, text: text });
-            // Text-Eingabe leeren
-            $('#text').val('');
-        }
-        // bei einem Klick
-
-        function getUser(id) {
-
-            console.log('Klick');
-            $.getJSON("/user/1", function (data) {
-                console.log(JSON.stringify(data));
-                $('#name').val(data.user.firstname + ' ' + data.user.lastname);
-            })
-        }
-
-        $().ready(function() {
-			// WebSocket
-		    var socket = io.connect();
-		    // neue Nachricht
-		    socket.on('chat', function (data) {
-		        var zeit = new Date(data.zeit);
-		        $('#content').append(
-		            $('<li></li>').append(
-		                // Uhrzeit
-		                $('<span>').text('[' +
-		                    (zeit.getHours() < 10 ? '0' + zeit.getHours() : zeit.getHours())
-		                    + ':' +
-		                    (zeit.getMinutes() < 10 ? '0' + zeit.getMinutes() : zeit.getMinutes())
-		                    + '] '
-		                ),
-		                // Name
-		                $('<b>').text(typeof(data.name) != 'undefined' ? data.name + ': ' : ''),
-		                // Text
-		                $('<span>').text(data.text))
-		        );
-		        // nach unten scrollen
-		        // $('body').scrollTop($('body')[0].scrollHeight);
-		    });
-		    // Nachricht senden
-		    $('#senden').click(function () {
-                getUser(1);
-            });
-		    // oder mit der Enter-Taste
-		    $('#text').keypress(function (e) {
-		        if (e.which == 13) {
-		            senden();
-		        }
-		    });
-			
-		});
-	</script>	
 	<link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -86,10 +35,10 @@
 	<div class="cell page-right"></div>
 </div>
 <div class="page-body row">
-	<div class="cell page-left"></div>
+	<div class="cell page-left"><div id="react"></div></div>
 	<div class="cell page-center">
-		<div class="inner">
-			Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+		<div class="inner" id="mainData">
+             Main Data mmm
 		</div>
 	</div>
 	<div class="cell page-right"></div>
@@ -103,5 +52,8 @@
     </div>
 	<div class="cell page-right"></div>	
 </div>
+<script type="text/babel" src="jsx/first.js"></script>
+<script type="text/babel">
+</script>
 </body>
 </html>

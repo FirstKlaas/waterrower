@@ -95,6 +95,8 @@ inline void startMeasuring() {
 
 /**
  * Stops the measurement.
+ * The ISR will be detached, so no more ticks are counted.
+ * All variables will be resetted.
  */
 void stopMeasuring() {
   stopISR();
@@ -103,6 +105,10 @@ void stopMeasuring() {
   meter_per_second = 0.0;
 }
 
+/**
+ * Sets all variable back to their default value.
+ * No tickes and no seconds.
+ */
 void reset() {
   tick = 0;
   lasttick = 0;
@@ -110,6 +116,10 @@ void reset() {
   last_seconds = 0;
 }
 
+/**
+ * Prints the payload of a mqtt message as a string. This of course works
+ * only, if the payload represnts a string.
+ */
 void printPayload(byte* payload, unsigned int length) {
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
@@ -117,6 +127,9 @@ void printPayload(byte* payload, unsigned int length) {
   Serial.println(";");
 }
 
+/**
+ * Printes a binary payload in hexadecimal representation. 
+ */
 void printPayloadHex(byte* payload, unsigned int length) {
   for (int i = 0; i < length; i++) {
     if (payload[i] < 16) Serial.print("0"); 

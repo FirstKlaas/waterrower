@@ -14,6 +14,9 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
+#include "commands.h"
+#include "mqtt.h"
+
 /*  You have to adapt the values for the  
  *  ssid and password of course.
  */
@@ -66,28 +69,43 @@ byte mac[6];
 
 uint8_t data[10];
 
-typedef void (* CMD_Func) (byte* payload, unsigned int length);
-
-CMD_Func commands[3] = {&cmdNone, &cmdStartSession, &cmdStopSession};
-
-void cmdNone(byte* payload, unsigned int length) {
-  
-}
-
-void cmdStartSession(byte* payload, unsigned int length) {
-  
-}
-
-void cmdStopSession(byte* payload, unsigned int length) {
-  
-}
-
 /** 
  * Update these with values suitable for your network. 
  *  192.168.178.78
  */
 WiFiClient espClient; 
 PubSubClient client(espClient);
+
+
+void cmdNone(byte* payload, unsigned int length) {
+  
+}
+
+void cmdStartSession(byte* payload, unsigned int length) {
+  sessionid_high = payload[0];
+  sessionid_low  = payload[1];
+  using_fake_waterrower =  (payload[3] == DEVICE_HARDWARE ? false : true); 
+  #ifdef DEBUG
+  Serial.println("START SESSION");
+  #endif
+  startMeasuring();  
+  #ifdef DEBUG
+  Serial.println("SESSION STARTET");  
+  #endif
+}
+
+void cmdStopSession(byte* payload, unsigned int length) {
+  #ifdef DEBUG
+  Serial.println("STOP SESSION");  
+  #endif
+  stopMeasuring();
+  sessionid_high = 0;
+  sessionid_low  = 0;
+  #ifdef DEBUG
+  Serial.println("STOPPED SESSION");  
+  #endif
+}
+
 
 /*
  * true if measuring currently is running, false else.
@@ -132,28 +150,6 @@ void reset() {
   last_seconds = 0;
 }
 
-/**
- * Prints the payload of a mqtt message as a string. This of course works
- * only, if the payload represnts a string.
- */
-void printPayload(byte* payload, unsigned int length) {
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println(";");
-}
-
-/**
- * Printes a binary payload in hexadecimal representation. 
- */
-void printPayloadHex(byte* payload, unsigned int length) {
-  for (int i = 0; i < length; i++) {
-    if (payload[i] < 16) Serial.print("0"); 
-    Serial.print(payload[i],HEX);
-    Serial.print(" ");
-  }
-  Serial.println("");
-}
 
 /**
  * This is the callback method for the
@@ -175,7 +171,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Payload: ");
   printPayloadHex(payload, length);
   #endif
-  commands[payload[0]](&payload[1], length-1);
+  runCommand(payload[0],&payload[1], length-1);
   /**
    * The first byte of the payload contains the command to 
    * be executed.
@@ -220,6 +216,34 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 /**
+ * Prints the payload of a mqtt message as a string. This of course works
+ * only, if the payload represnts a string.
+ */
+void printPayload(byte* payload, unsigned int length) {
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println(";");
+}
+
+/**
+ * Printes a binary payload in hexadecimal representation. 
+ */
+void printPayloadHex(byte* payload, unsigned int length) {
+  for (int i = 0; i < length; i++) {
+    if (payload[i] < 16) Serial.print("0"); 
+    Serial.print(payload[i],HEX);
+    Serial.print(" ");
+  }
+  Serial.println("");
+}
+
+void setupMqtt() {
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);  
+}
+
+/**
  * Initialiert den Timer 0. 
  * Jede Sekunde wird die Funktion timer_0_isr() aufgerufen.
  */
@@ -239,10 +263,6 @@ void stopISR() {
   detachInterrupt(digitalPinToInterrupt(ROWER_PIN));  
 }
 
-void setupMqtt() {
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);  
-}
 
 /**
  * Wandelt die MAC Adresse des in einen String um.
@@ -284,6 +304,9 @@ void startWIFI(boolean verbose) {
 
 void setup()
 {
+  registerCommand(CMD_START_SESSION, &cmdStartSession);
+  registerCommand(CMD_STOP_SESSION, &cmdStopSession);
+  
   pinMode(LED_BUILTIN, OUTPUT);
   // Setup console
   Serial.begin(115200);

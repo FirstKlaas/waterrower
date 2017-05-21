@@ -2,7 +2,7 @@
 # waterrower tracking
 IoT for the water rower.
 
-This is the outcome of the [bremen.hack][1] 2016. 
+This is the outcome of the [bremen.hack][1] 2016. Awesome.
 
 
 

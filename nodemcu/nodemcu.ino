@@ -15,7 +15,6 @@
 #include <PubSubClient.h>
 
 #include "commands.h"
-#include "mqtt.h"
 
 /*  You have to adapt the values for the  
  *  ssid and password of course.
@@ -37,6 +36,8 @@ volatile unsigned long tick     = 0;
 volatile unsigned long lasttick = 0;
 volatile float meter_per_second = 0.0;
 volatile unsigned long seconds  = 0;
+volatile float distance = 0.0;
+
 
 unsigned long last_seconds = 0;              // Which 'seconds' value was send the last time
 
@@ -148,6 +149,7 @@ void reset() {
   lasttick = 0;
   seconds = 0;  
   last_seconds = 0;
+  distance = 0.0;
 }
 
 
@@ -397,17 +399,28 @@ void loop()
   delay(10);
 }
 
+/**
+ * The interrupt service routine (ISR) that is called every second. 
+ * If measuring, then the following variables will be updated.
+ * 
+ * seconds, meter_per_second, lasttick
+ */
 void timer_0_ISR(void) {
   if (is_measuring()) {
     seconds++;    
     unsigned long current_tick = tick;
-    float distance = (float) (current_tick - lasttick);
+    distance = (float) (current_tick - lasttick);
     meter_per_second = distance / ratio;
     lasttick = current_tick;
   }
   timer0_write(ESP.getCycleCount() + 80000000); //80Mhz -> 80*10^6 = 1 second
 }
 
+/**
+ * The ISR that is called every time the waterrower gives a signal.
+ * Ticke is updated. A debounce time is used to avoid ticks that come
+ * frome bounces.
+ */
 void tick_ISR(void) {
   digitalWrite(LED_BUILTIN, HIGH);
   unsigned long m = millis();

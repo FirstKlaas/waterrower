@@ -45,7 +45,7 @@ const byte DEVICE_FAKE_WATERROWER = 1;
 
 boolean using_fake_waterrower = false;
 
-
+#define DEBUG
 
 byte sessionid_low  = 0;                      // Session ID we got from the server (Low Byte)
 byte sessionid_high = 0;                      // Session ID we got from the server (High Byte)
@@ -65,6 +65,22 @@ char message[80];                             // Buffer for the message
 byte mac[6];
 
 uint8_t data[10];
+
+typedef void (* CMD_Func) (byte* payload, unsigned int length);
+
+CMD_Func commands[3] = {&cmdNone, &cmdStartSession, &cmdStopSession};
+
+void cmdNone(byte* payload, unsigned int length) {
+  
+}
+
+void cmdStartSession(byte* payload, unsigned int length) {
+  
+}
+
+void cmdStopSession(byte* payload, unsigned int length) {
+  
+}
 
 /** 
  * Update these with values suitable for your network. 
@@ -152,12 +168,19 @@ void printPayloadHex(byte* payload, unsigned int length) {
  */
 void callback(char* topic, byte* payload, unsigned int length) {
   // handle message arrived
+  #ifdef DEBUG
   Serial.println("Received mqtt message.");
   Serial.print("Topic: ");
   Serial.println(topic);
   Serial.print("Payload: ");
   printPayloadHex(payload, length);
-
+  #endif
+  commands[payload[0]](&payload[1], length-1);
+  /**
+   * The first byte of the payload contains the command to 
+   * be executed.
+   */
+   /**
   switch (payload[0]) {
     case CMD_START_SESSION:
       sessionid_high = payload[1];
@@ -172,7 +195,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
       stopMeasuring();
       break;
   }
-  
+
+  **/
+
+  /**
   if (strcmp("sportshub/session",topic) == 0) {
     if (strcmp("start",(char*) payload) == 0) {
       startMeasuring();
@@ -190,6 +216,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
      
   }
+  **/
 }
 
 /**

@@ -20,4 +20,6 @@ CmdFunction getCommand(uint8_t id);
 
 void runCommand(uint8_t id, uint8_t* payload, unsigned int length);
 
+uint8_t sizeCommand();
+
 #endif

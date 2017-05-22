@@ -5,6 +5,8 @@
 CommandPtr head = NULL;
 
 void registerCommand(uint8_t id, CmdFunction func) {
+  if (getCommand(id) != NULL) return;
+   
   CommandPtr cmd = (CommandPtr) malloc(sizeof(Command));
   cmd->id   = id;
   cmd->func = func;
@@ -14,6 +16,7 @@ void registerCommand(uint8_t id, CmdFunction func) {
     cmd->next = head;
   }
   head = cmd;
+  return;
 }
 
 CmdFunction getCommand(uint8_t id) {
@@ -23,6 +26,17 @@ CmdFunction getCommand(uint8_t id) {
     cursor = cursor->next;  
   }
   return NULL;
+}
+
+uint8_t sizeCommand() {
+  CommandPtr cursor = head;
+  uint8_t size = 0;
+  while (cursor != NULL) {
+    size++;
+    cursor = cursor->next;  
+  }
+  return size;
+  
 }
 
 void runCommand(uint8_t id, uint8_t* payload, unsigned int length) {

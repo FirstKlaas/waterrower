@@ -26,17 +26,22 @@ const char* mqtt_server = "nebuhr";
 const int ROWER_PIN = 4;
 const int LED_PIN   = 5;
 
-byte PIN_MODE_WRITE = 1;
-byte PIN_MODE_READ  = 0;
+const byte PIN_MODE_WRITE = 1;
+const byte PIN_MODE_READ  = 0;
 
-byte PIN_STATE_HIGH = 1;
-byte PIN_STATE_LOW  = 0;
+const byte PIN_STATE_HIGH = 1;
+const byte PIN_STATE_LOW  = 0;
 
-volatile unsigned long tick     = 0;
-volatile unsigned long lasttick = 0;
-volatile float meter_per_second = 0.0;
-volatile unsigned long seconds  = 0;
-volatile float distance = 0.0;
+/**
+ * These are the variables that are modified by the ISR. Therefor they are declared as volatile.
+ * This ensures that any read to this variables will be done in memory and not on behalf of a
+ * cached value.
+ */
+volatile unsigned long tick     = 0;         // Counts the signals coming from the waterrower
+volatile unsigned long lasttick = 0;         // Saves the last tick
+volatile float meter_per_second = 0.0;       // As the name says. Value for meter per second
+volatile unsigned long seconds  = 0;         // Seconds the workout is running
+volatile float distance         = 0.0;       // Distance in meters for this workout              
 
 
 unsigned long last_seconds = 0;              // Which 'seconds' value was send the last time
@@ -47,7 +52,7 @@ const byte CMD_STOP_SESSION  = 2;
 const byte DEVICE_HARDWARE        = 0;
 const byte DEVICE_FAKE_WATERROWER = 1;
 
-boolean using_fake_waterrower = false;
+boolean using_fake_waterrower = true;
 
 #define DEBUG
 
@@ -144,47 +149,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   printPayloadHex(payload, length);
   #endif
   runCommand(payload[0],&payload[1], length-1);
-  /**
-   * The first byte of the payload contains the command to 
-   * be executed.
-   */
-   /**
-  switch (payload[0]) {
-    case CMD_START_SESSION:
-      sessionid_high = payload[1];
-      sessionid_low  = payload[2];
-      using_fake_waterrower =  (payload[3] == DEVICE_HARDWARE ? false : true); 
-      Serial.println("START SESSION");
-      startMeasuring();
-      
-      break;
-    case CMD_STOP_SESSION:
-      Serial.println("STOP SESSION");
-      stopMeasuring();
-      break;
-  }
-
-  **/
-
-  /**
-  if (strcmp("sportshub/session",topic) == 0) {
-    if (strcmp("start",(char*) payload) == 0) {
-      startMeasuring();
-    } else if (strcmp("stop", (char*) payload) == 0) {     
-      stopMeasuring();
-    } else {
-      Serial.println("Unknown session command");    
-    }
-  } else if (strcmp("pin",topic) == 0) {
-    Serial.print("Pin ");
-    printPayload(payload, length);
-    
-    if (payload[0] == PIN_MODE_WRITE) {
-      digitalWrite(payload[1], payload[2] == PIN_STATE_HIGH ? HIGH : LOW);
-    }
-     
-  }
-  **/
 }
 
 /**

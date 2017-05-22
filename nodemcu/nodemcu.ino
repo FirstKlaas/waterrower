@@ -289,19 +289,22 @@ void startWIFI(boolean verbose) {
     };
   }
 
-  if (verbose) {
+  #ifdef DEBUG
     Serial.println("");
     Serial.println("WiFi connected");  
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
-    WiFi.macAddress(mac);
-  };
+  #endif  
+  
+  WiFi.macAddress(mac);
   WiFi.begin(ssid, password);
 
+  #ifdef DEBUG
   if (verbose && WiFi.status() == WL_CONNECTED) {
     Serial.println("");
     Serial.println("WiFi connected");
   }
+  #endif
 }
 
 void setup()
@@ -332,10 +335,14 @@ void setup()
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
+    #ifdef DEBUG
     Serial.print("Attempting MQTT connection...");
+    #endif
     // Attempt to connect
     if (client.connect(getClientID().c_str())) {
+      #ifdef DEBUG
       Serial.println("connected");
+      #endif
       // Once connected, publish an announcement...
       client.publish("sportshub","Waterrower connected");
       client.publish("sportshub/device/connect",getClientID().c_str());
@@ -346,8 +353,10 @@ void reconnect() {
       client.subscribe(topic.c_str());
       
     } else {
+      #ifdef DEBUG
       Serial.print("failed, rc=");
       Serial.println(" try again in 5 seconds");
+      #endif
       // Wait 5 seconds before retrying
       delay(5000);
     }

@@ -66,9 +66,9 @@ const unsigned long debounceDelay = 20;       // Duration in millis to ignore in
 volatile boolean measuring_running = false;
 
 char message[80];                             // Buffer for the message
-byte mac[6];
+byte mac[6];                                  // Buffer for storing the MAC Address.
 
-uint8_t data[10];
+uint8_t data[10];                             // Don't know what this variable was for.
 
 /** 
  * Update these with values suitable for your network. 
@@ -76,36 +76,6 @@ uint8_t data[10];
  */
 WiFiClient espClient; 
 PubSubClient client(espClient);
-
-
-void cmdNone(byte* payload, unsigned int length) {
-  
-}
-
-void cmdStartSession(byte* payload, unsigned int length) {
-  sessionid_high = payload[0];
-  sessionid_low  = payload[1];
-  using_fake_waterrower =  (payload[3] == DEVICE_HARDWARE ? false : true); 
-  #ifdef DEBUG
-  Serial.println("START SESSION");
-  #endif
-  startMeasuring();  
-  #ifdef DEBUG
-  Serial.println("SESSION STARTET");  
-  #endif
-}
-
-void cmdStopSession(byte* payload, unsigned int length) {
-  #ifdef DEBUG
-  Serial.println("STOP SESSION");  
-  #endif
-  stopMeasuring();
-  sessionid_high = 0;
-  sessionid_low  = 0;
-  #ifdef DEBUG
-  Serial.println("STOPPED SESSION");  
-  #endif
-}
 
 
 /*
@@ -400,7 +370,7 @@ void loop()
         
         //sprintf(message,"%u;%u;%u;%u",m_tick, m_seconds, m_speed, (unsigned long) (m_tick*100/ratio));
         //Serial.println(message);
-        client.publish("sportshub/da  ta",data, 10);
+        client.publish("sportshub/data",data, 10);
         last_seconds = m_seconds;
       }
     }

@@ -14,6 +14,13 @@ struct Command {
   CommandPtr next;
 };
 
+
+void cmdNonecmdNone(uint8_t* payload, uint16_t length);
+
+void cmdStartSession(uint8_t* payload, uint16_t length);
+
+void cmdStopSession(uint8_t* payload, uint16_t length);
+
 void registerCommand(uint8_t id, CmdFunction func);
 
 CmdFunction getCommand(uint8_t id);

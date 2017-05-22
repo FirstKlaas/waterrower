@@ -4,6 +4,11 @@
 
 CommandPtr head = NULL;
 
+
+void cmdNone(uint8_t* payload, uint16_t length) {
+  
+}
+
 void registerCommand(uint8_t id, CmdFunction func) {
   if (getCommand(id) != NULL) return;
    

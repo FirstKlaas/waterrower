@@ -11,20 +11,15 @@
  @created: 2016-09-25
  
 */
-#include <ESP8266WiFi.h>
-#include <PubSubClient.h>
-
 #include "commands.h"
+#include "waterrower.h"
 
 /*  You have to adapt the values for the  
  *  ssid and password of course.
  */
 const char* ssid     = "FRITZ!Box 6360 Cable";      
 const char* password = "4249789363748310";
-const char* mqtt_server = "nebuhr";
-
-const int ROWER_PIN = 4;
-const int LED_PIN   = 5;
+const char* mqtt_server = "blender";
 
 const byte PIN_MODE_WRITE = 1;
 const byte PIN_MODE_READ  = 0;
@@ -32,220 +27,14 @@ const byte PIN_MODE_READ  = 0;
 const byte PIN_STATE_HIGH = 1;
 const byte PIN_STATE_LOW  = 0;
 
-/**
- * These are the variables that are modified by the ISR. Therefor they are declared as volatile.
- * This ensures that any read to this variables will be done in memory and not on behalf of a
- * cached value.
- */
-volatile unsigned long tick     = 0;         // Counts the signals coming from the waterrower
-volatile unsigned long lasttick = 0;         // Saves the last tick
-volatile float meter_per_second = 0.0;       // As the name says. Value for meter per second
-volatile unsigned long seconds  = 0;         // Seconds the workout is running
-volatile float distance         = 0.0;       // Distance in meters for this workout              
-
-
-unsigned long last_seconds = 0;              // Which 'seconds' value was send the last time
-
-const byte CMD_START_SESSION = 1;
-const byte CMD_STOP_SESSION  = 2;
-
-const byte DEVICE_HARDWARE        = 0;
-const byte DEVICE_FAKE_WATERROWER = 1;
-
-boolean using_fake_waterrower = true;
+uint8_t data[10];                             // Don't know what this variable was for.
 
 #define DEBUG
 
-byte sessionid_low  = 0;                      // Session ID we got from the server (Low Byte)
-byte sessionid_high = 0;                      // Session ID we got from the server (High Byte)
-
-
-/**
- * 4.805 ticks (interrupts) is equal to one meter distance.
- */
-const float ratio = 4.805;
-
-volatile long lastDebounceTime = 0;           // the last time the output pin was toggled in millis
-const unsigned long debounceDelay = 20;       // Duration in millis to ignore interrupts
-                                              // slower than STOP_SPEED before a new session can start.
-volatile boolean measuring_running = false;
-
-char message[80];                             // Buffer for the message
-byte mac[6];                                  // Buffer for storing the MAC Address.
-
-uint8_t data[10];                             // Don't know what this variable was for.
-
-/** 
- * Update these with values suitable for your network. 
- *  192.168.178.78
- */
-WiFiClient espClient; 
-PubSubClient client(espClient);
-
-
-/*
- * true if measuring currently is running, false else.
- * If not measuring, no values will be published to 
- * the mqtt server.
- */
-inline boolean is_measuring() {
-  return measuring_running; 
-}
-
-/**
- * Activates measuring. If not already measuring, this 
- * also resets internal variables for measurement.
- */
-inline void startMeasuring() {
-  reset();
-  measuring_running = true;
-  lastDebounceTime = millis();
-  startISR();
-}
-
-/**
- * Stops the measurement.
- * The ISR will be detached, so no more ticks are counted.
- * All variables will be resetted.
- */
-void stopMeasuring() {
-  stopISR();
-  reset();
-  measuring_running = false;
-  meter_per_second = 0.0;
-}
-
-/**
- * Sets all variable back to their default value.
- * No tickes and no seconds.
- */
-void reset() {
-  tick = 0;
-  lasttick = 0;
-  seconds = 0;  
-  last_seconds = 0;
-  distance = 0.0;
-}
-
-
-/**
- * This is the callback method for the
- * MQTT Server. It gets called, whenever
- * the controller receives a message
- * from the MQTT server. It gets only messages
- * for toppics subscribed to.
- * 
- * Currently there's only one action. If the 
- * payload String equals "reset", the measuring
- * stops. This was only for testing.
- */
-void callback(char* topic, byte* payload, unsigned int length) {
-  // handle message arrived
-  #ifdef DEBUG
-  Serial.println("Received mqtt message.");
-  Serial.print("Topic: ");
-  Serial.println(topic);
-  Serial.print("Payload: ");
-  printPayloadHex(payload, length);
-  #endif
-  runCommand(payload[0],&payload[1], length-1);
-}
-
-/**
- * Prints the payload of a mqtt message as a string. This of course works
- * only, if the payload represnts a string.
- */
-void printPayload(byte* payload, unsigned int length) {
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println(";");
-}
-
-/**
- * Printes a binary payload in hexadecimal representation. 
- */
-void printPayloadHex(byte* payload, unsigned int length) {
-  for (int i = 0; i < length; i++) {
-    if (payload[i] < 16) Serial.print("0"); 
-    Serial.print(payload[i],HEX);
-    Serial.print(" ");
-  }
-  Serial.println("");
-}
-
-void setupMqtt() {
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);  
-}
-
-/**
- * Initialiert den Timer 0. 
- * Jede Sekunde wird die Funktion timer_0_isr() aufgerufen.
- */
-void startClock() {
-  noInterrupts();
-  timer0_isr_init();
-  timer0_attachInterrupt(timer_0_ISR);
-  timer0_write(ESP.getCycleCount() + 80000000); //80Mhz -> 80*10^6 = 1 second
-  interrupts();
-}
-
-void startISR() {
-  attachInterrupt(digitalPinToInterrupt(ROWER_PIN), tick_ISR, FALLING);
-}
-
-void stopISR() {
-  detachInterrupt(digitalPinToInterrupt(ROWER_PIN));  
-}
-
-
-/**
- * Wandelt die MAC Adresse des in einen String um.
- */
-String getClientID() {
-  String s = String();
-  for (int i=0; i<6; i++) { 
-    if (mac[i] < 16) s += '0';
-    s += String(mac[i],HEX);
-    if (i < 5) s += String(':');
-  };
-  return s;
-}
-
-void startWIFI(boolean verbose) {
-  WiFi.begin(ssid, password);
-  
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    if (verbose) {
-      Serial.print(".");
-    };
-  }
-
-  #ifdef DEBUG
-    Serial.println("");
-    Serial.println("WiFi connected");  
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-  #endif  
-  
-  WiFi.macAddress(mac);
-  WiFi.begin(ssid, password);
-
-  #ifdef DEBUG
-  if (verbose && WiFi.status() == WL_CONNECTED) {
-    Serial.println("");
-    Serial.println("WiFi connected");
-  }
-  #endif
-}
-
 void setup()
 {
-  registerCommand(CMD_START_SESSION, &cmdStartSession);
-  registerCommand(CMD_STOP_SESSION, &cmdStopSession);
-  
+  initCommands();
+    
   pinMode(LED_BUILTIN, OUTPUT);
   // Setup console
   Serial.begin(115200);
@@ -260,68 +49,36 @@ void setup()
   pinMode(ROWER_PIN, INPUT_PULLUP);
   digitalWrite(ROWER_PIN,HIGH);
 
-  startWIFI(true);
+  startWIFI(ssid, password);
   startClock();
-  setupMqtt();
+  setupMqtt(mqtt_server);
   //startMeasuring();
 }
 
-void reconnect() {
-  // Loop until we're reconnected
-  while (!client.connected()) {
-    #ifdef DEBUG
-    Serial.print("Attempting MQTT connection...");
-    #endif
-    // Attempt to connect
-    if (client.connect(getClientID().c_str())) {
-      #ifdef DEBUG
-      Serial.println("connected");
-      #endif
-      // Once connected, publish an announcement...
-      client.publish("sportshub","Waterrower connected");
-      client.publish("sportshub/device/connect",getClientID().c_str());
-      
-      String topic = String();
-      topic += getClientID();
-      topic += "/#";
-      client.subscribe(topic.c_str());
-      
-    } else {
-      #ifdef DEBUG
-      Serial.print("failed, rc=");
-      Serial.println(" try again in 5 seconds");
-      #endif
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
-  }
-}
 
 void loop()
 {
   // save the seconds value for this method to avoid race conditions
-  unsigned long m_seconds = seconds;
-  unsigned long m_tick = tick;
-  float m_meter_per_second = meter_per_second; 
+  unsigned long m_seconds = getSeconds();
+  unsigned long m_tick = getTicks();
+  float m_meter_per_second = getMeterPerSecond(); 
   
-  if (!client.connected()) {
+  if (!getMqttClient().connected()) {
     reconnect();
   }
   
-  //Serial.print(" m/s: "); Serial.println(m_meter_per_second);
-    
-  if (client.loop()) {
+  if (getMqttClient().loop()) {
     if (is_measuring()) { //
-      if (m_seconds > last_seconds) { //
-        if (using_fake_waterrower) {
+      if (m_seconds > getLastSeconds()) { //
+        if (isUsingFakeDevice()) {
           m_meter_per_second = random(100);
           m_tick = random(32000);
         }
         unsigned long m_speed    = (unsigned long) (m_meter_per_second * 100);
-        unsigned long m_distance = (unsigned long) (m_tick*100/ratio);
+        unsigned long m_distance = getDistance(m_tick);
 
-        data[0] = sessionid_high;
-        data[1] = sessionid_low;
+        data[0] = getSessionHigh();
+        data[1] = getSessionLow();
         data[2] = highByte(m_tick);
         data[3] = lowByte(m_tick);
         data[4] = highByte(m_seconds);
@@ -334,43 +91,13 @@ void loop()
         
         //sprintf(message,"%u;%u;%u;%u",m_tick, m_seconds, m_speed, (unsigned long) (m_tick*100/ratio));
         //Serial.println(message);
-        client.publish("sportshub/data",data, 10);
-        last_seconds = m_seconds;
+        getMqttClient().publish("sportshub/data",data, 10);
+        markTime(m_seconds);
       }
     }
   }
   delay(10);
 }
 
-/**
- * The interrupt service routine (ISR) that is called every second. 
- * If measuring, then the following variables will be updated.
- * 
- * seconds, meter_per_second, lasttick
- */
-void timer_0_ISR(void) {
-  if (is_measuring()) {
-    seconds++;    
-    unsigned long current_tick = tick;
-    distance = (float) (current_tick - lasttick);
-    meter_per_second = distance / ratio;
-    lasttick = current_tick;
-  }
-  timer0_write(ESP.getCycleCount() + 80000000); //80Mhz -> 80*10^6 = 1 second
-}
 
-/**
- * The ISR that is called every time the waterrower gives a signal.
- * Ticke is updated. A debounce time is used to avoid ticks that come
- * frome bounces.
- */
-void tick_ISR(void) {
-  digitalWrite(LED_BUILTIN, HIGH);
-  unsigned long m = millis();
-  if (m - lastDebounceTime > debounceDelay) {
-    tick++;  
-  }
-  lastDebounceTime = m;
-  digitalWrite(LED_BUILTIN, LOW);
-}
 

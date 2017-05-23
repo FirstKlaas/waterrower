@@ -2,52 +2,40 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-CommandPtr head = NULL;
-
+const uint8_t CMD_START_SESSION = 1;
+const uint8_t CMD_STOP_SESSION  = 2;
 
 void cmdNone(uint8_t* payload, uint16_t length) {
   
 }
 
-void registerCommand(uint8_t id, CmdFunction func) {
-  if (getCommand(id) != NULL) return;
-   
-  CommandPtr cmd = (CommandPtr) malloc(sizeof(Command));
-  cmd->id   = id;
-  cmd->func = func;
-  cmd->next = NULL;
-  
-  if (head != NULL) {
-    cmd->next = head;
-  }
-  head = cmd;
-  return;
+void cmdStartSession(uint8_t* payload, unsigned int length) {
+  setSession(payload[0],payload[1]);
+  setUsingFakeDevice(payload[3] == DEVICE_HARDWARE ? false : true); 
+  #ifdef DEBUG
+  Serial.println("START SESSION");
+  #endif
+  startMeasuring();  
+  #ifdef DEBUG
+  Serial.println("SESSION STARTET");  
+  #endif
 }
 
-CmdFunction getCommand(uint8_t id) {
-  CommandPtr cursor = head;
-  while (cursor != NULL) {
-    if (cursor->id == id) return cursor->func;
-    cursor = cursor->next;  
-  }
-  return NULL;
+void cmdStopSession(uint8_t* payload, unsigned int length) {
+  #ifdef DEBUG
+  Serial.println("STOP SESSION");  
+  #endif
+  stopMeasuring();
+  setSession(0,0);
+  #ifdef DEBUG
+  Serial.println("STOPPED SESSION");  
+  #endif
 }
 
-uint8_t sizeCommand() {
-  CommandPtr cursor = head;
-  uint8_t size = 0;
-  while (cursor != NULL) {
-    size++;
-    cursor = cursor->next;  
-  }
-  return size;
-  
+void initCommands(void) {
+  registerCommand(CMD_START_SESSION, (CmdFunction) &cmdStartSession);
+  registerCommand(CMD_STOP_SESSION, (CmdFunction) &cmdStopSession);
 }
 
-void runCommand(uint8_t id, uint8_t* payload, unsigned int length) {
-  CmdFunction cmd = getCommand(id);
-  if (cmd != NULL) {
-    cmd(payload,length);
-  }
-}
+
 

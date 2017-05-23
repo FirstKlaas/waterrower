@@ -5,13 +5,15 @@
 const uint8_t CMD_START_SESSION = 1;
 const uint8_t CMD_STOP_SESSION  = 2;
 
+#define DEBUG
+
 void cmdNone(uint8_t* payload, uint16_t length) {
   
 }
 
 void cmdStartSession(uint8_t* payload, unsigned int length) {
   setSession(payload[0],payload[1]);
-  setUsingFakeDevice(payload[3] == DEVICE_HARDWARE ? false : true); 
+  setUsingFakeDevice(payload[2] == DEVICE_HARDWARE ? false : true); 
   #ifdef DEBUG
   Serial.println("START SESSION");
   #endif

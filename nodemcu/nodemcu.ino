@@ -42,7 +42,7 @@ void setup()
   //Serial.println();
   //Serial.println();
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN,HIGH);
+  digitalWrite(LED_PIN,LOW);
 
   
   
@@ -59,8 +59,8 @@ void setup()
 void loop()
 {
   // save the seconds value for this method to avoid race conditions
-  unsigned long m_seconds = getSeconds();
-  unsigned long m_tick = getTicks();
+  unsigned long m_seconds  = getSeconds();
+  unsigned long m_tick     = getTicks();
   float m_meter_per_second = getMeterPerSecond(); 
   
   if (!getMqttClient().connected()) {
@@ -91,8 +91,10 @@ void loop()
         
         //sprintf(message,"%u;%u;%u;%u",m_tick, m_seconds, m_speed, (unsigned long) (m_tick*100/ratio));
         //Serial.println(message);
+        digitalWrite(LED_PIN,HIGH);
         getMqttClient().publish("sportshub/data",data, 10);
         markTime(m_seconds);
+        digitalWrite(LED_PIN,LOW);
       }
     }
   }

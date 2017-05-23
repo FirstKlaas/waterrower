@@ -79,23 +79,16 @@ boolean is_measuring() {
   return measuring_running; 
 }
 
+const char hex[17]="0123456789ABCDEF";
 
+void ShowHex(byte convertByte){
+  Serial.print( hex[(convertByte >>4) & 0x0F]);
+  Serial.println( hex[convertByte & 0x0F]);
+}
 /**
  * Wandelt die MAC Adresse des in einen String um.
  */
 const char* getClientID() {
-  uint8_t index = 0;
-  for (uint8_t i=0; i<6; i++) { 
-    if (mac[i] < 16) {
-      clientid[index++] = '0';
-    }
-    clientid[index++] = '1';
-    if (i < 5) {
-      clientid[index++] = ':';
-    }
-    
-  };
-  clientid[index] = 0;
   return clientid;
 }
 
@@ -121,8 +114,7 @@ void reconnect() {
       
     } else {
       #ifdef DEBUG
-      Serial.print("failed, rc=");
-      Serial.println(" try again in 5 seconds");
+      Serial.println("Wifi connection failed. I will try again in 5 seconds");
       #endif
       // Wait 5 seconds before retrying
       delay(5000);
@@ -131,6 +123,8 @@ void reconnect() {
 }
 
 void startWIFI(const char* ssid, const char* password) {
+  uint8_t index = 0;
+  
   WiFi.begin(ssid, password);
   
   while (WiFi.status() != WL_CONNECTED) {
@@ -148,6 +142,17 @@ void startWIFI(const char* ssid, const char* password) {
   #endif  
   
   WiFi.macAddress(mac);
+  
+  for (uint8_t i=0; i<6; i++) { 
+    
+    clientid[index++] = (char) (hex[(mac[i] >> 4) & 0x0F]);
+    clientid[index++] = (char) (hex[(mac[i]) & 0x0F]);
+    if (i < 5) {
+      clientid[index++] = ':';
+    }
+    
+  };
+  clientid[index] = 0;
 
   /**
   WiFi.begin(ssid, password);

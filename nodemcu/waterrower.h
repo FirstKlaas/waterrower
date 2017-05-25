@@ -43,11 +43,9 @@ const char* getClientID();
 
 void startWIFI(const char* ssid, const char* password);
 
-
 void setupMqtt(const char* server);
 
-
-PubSubClient getMqttClient();
+void sendWaterrowerData(void);
 
 void reconnect();
 

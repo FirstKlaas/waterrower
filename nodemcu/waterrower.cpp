@@ -1,6 +1,8 @@
 #include "waterrower.h"
 /** 
  */
+//#define DEBUG
+
 WiFiClient espClient; 
 PubSubClient client(espClient);
 
@@ -38,15 +40,19 @@ const unsigned long debounceDelay = 20;       // Duration in millis to ignore in
                                               // slower than STOP_SPEED before a new session can start.
 volatile boolean measuring_running = false;
 
-char message[80];                             // Buffer for the message
 byte mac[6];                                  // Buffer for storing the MAC Address.
-
+uint8_t data[10];                             // Waterrower Data Array
 char clientid[18];
 
 uint8_t sessionid_low  = 0;                      // Session ID we got from the server (Low Byte)
 uint8_t sessionid_high = 0;                      // Session ID we got from the server (High Byte)
 
 boolean using_fake_waterrower = true;
+
+#ifdef DEBUG
+char message[80];                             // Buffer for the message
+#endif
+
 
 void setSession(uint8_t high,uint8_t low) {
   sessionid_high = high;
@@ -94,23 +100,23 @@ const char* getClientID() {
 
 void reconnect() {
   // Loop until we're reconnected
-  while (!getMqttClient().connected()) {
+  while (!client.connected()) {
     #ifdef DEBUG
     Serial.print("Attempting MQTT connection...");
     #endif
     // Attempt to connect
-    if (getMqttClient().connect(getClientID())) {
+    if (client.connect(getClientID())) {
       #ifdef DEBUG
       Serial.println("connected");
       #endif
       // Once connected, publish an announcement...
-      getMqttClient().publish("sportshub","Waterrower connected");
-      getMqttClient().publish("sportshub/device/connect",getClientID());
+      client.publish("sportshub","Waterrower connected");
+      client.publish("sportshub/device/connect",getClientID());
       
       String topic = String();
       topic += getClientID();
       topic += "/#";
-      getMqttClient().subscribe(topic.c_str());
+      client.subscribe(topic.c_str());
       
     } else {
       #ifdef DEBUG
@@ -172,21 +178,48 @@ void startWIFI(const char* ssid, const char* password) {
  * frome bounces.
  */
 void tick_ISR(void) {
-  digitalWrite(LED_BUILTIN, HIGH);
   unsigned long m = millis();
   if (m - lastDebounceTime > debounceDelay) {
     tick++;  
   }
   lastDebounceTime = m;
-  digitalWrite(LED_BUILTIN, LOW);
 }
 
 void startISR() {
-  attachInterrupt(digitalPinToInterrupt(ROWER_PIN), tick_ISR, FALLING);
+  #ifdef DEBUG
+  Serial.println("Attaching Rower ISR");
+  #endif
+  //attachInterrupt(digitalPinToInterrupt(ROWER_PIN), tick_ISR, FALLING);
 }
 
 void stopISR() {
-  detachInterrupt(digitalPinToInterrupt(ROWER_PIN));  
+  #ifdef DEBUG
+  Serial.println("Detaching Rower ISR");
+  #endif
+  //detachInterrupt(digitalPinToInterrupt(ROWER_PIN));  
+}
+
+/**
+ * Prints the payload of a mqtt message as a string. This of course works
+ * only, if the payload represnts a string.
+ */
+void printPayload(byte* payload, unsigned int length) {
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println(";");
+}
+
+/**
+ * Printes a binary payload in hexadecimal representation. 
+ */
+void printPayloadHex(byte* payload, unsigned int length) {
+  for (int i = 0; i < length; i++) {
+    if (payload[i] < 16) Serial.print("0"); 
+    Serial.print(payload[i],HEX);
+    Serial.print(" ");
+  }
+  Serial.println("");
 }
 
 
@@ -195,6 +228,7 @@ void stopISR() {
  * also resets internal variables for measurement.
  */
 void startMeasuring() {
+  if (measuring_running) return;
   reset();
   measuring_running = true;
   lastDebounceTime = millis();
@@ -207,6 +241,7 @@ void startMeasuring() {
  * All variables will be resetted.
  */
 void stopMeasuring() {
+  if (!measuring_running) return;
   stopISR();
   reset();
   measuring_running = false;
@@ -248,36 +283,72 @@ void callback(char* topic, byte* payload, unsigned int length) {
   runCommand(payload[0],&payload[1], length-1);
 }
 
-/**
- * Prints the payload of a mqtt message as a string. This of course works
- * only, if the payload represnts a string.
- */
-void printPayload(byte* payload, unsigned int length) {
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println(";");
-}
-
-/**
- * Printes a binary payload in hexadecimal representation. 
- */
-void printPayloadHex(byte* payload, unsigned int length) {
-  for (int i = 0; i < length; i++) {
-    if (payload[i] < 16) Serial.print("0"); 
-    Serial.print(payload[i],HEX);
-    Serial.print(" ");
-  }
-  Serial.println("");
-}
-
 void setupMqtt(const char* server) {
   client.setServer(server, 1883);
   client.setCallback(callback);  
 }
 
-PubSubClient getMqttClient() {
-  return client;
+void sendWaterrowerData(void) {
+  // save the seconds value for this method to avoid race conditions
+  unsigned long m_seconds  = getSeconds();
+  unsigned long m_tick     = getTicks();
+  float m_meter_per_second = getMeterPerSecond(); 
+  
+  if (!client.connected()) {
+    #ifdef DEBUG
+    Serial.println("Reconnecting mqtt");
+    #endif
+      
+    reconnect();
+  }
+  
+  if (client.loop()) {
+    if (is_measuring()) { //
+      #ifdef DEBUG
+      Serial.print(".");
+      #endif
+      if (m_seconds > getLastSeconds()) { //
+        
+        if (isUsingFakeDevice()) {
+          m_meter_per_second = random(100);
+          m_tick = random(32000);
+        }
+        unsigned long m_speed    = (unsigned long) (m_meter_per_second * 100);
+        unsigned long m_distance = getDistance(m_tick);
+
+        data[0] = getSessionHigh();
+        data[1] = getSessionLow();
+        data[2] = highByte(m_tick);
+        data[3] = lowByte(m_tick);
+        data[4] = highByte(m_seconds);
+        data[5] = lowByte(m_seconds);
+        data[6] = highByte(m_speed);
+        data[7] = lowByte(m_speed);
+        data[8] = highByte(m_distance);
+        data[9] = lowByte(m_distance);
+        
+        #ifdef DEBUG
+        sprintf(message,"%u;%u;%u;%u",m_tick, m_seconds, m_speed, m_distance);
+        Serial.println(message);
+        #endif
+        
+        client.publish("sportshub/data",data, 10);
+        markTime(m_seconds);
+      } else {
+        #ifdef DEBUG
+        Serial.println("Too early to update");
+        #endif      
+      }
+    } else {
+      #ifdef DEBUG
+      Serial.println("Not measuring.");
+      #endif
+    }
+  } else {
+    #ifdef DEBUG
+    Serial.println("No loop");
+    #endif    
+  }  
 }
 
 /**
@@ -302,6 +373,9 @@ void timer_0_ISR(void) {
  * Jede Sekunde wird die Funktion timer_0_isr() aufgerufen.
  */
 void startClock() {
+  #ifdef DEBUG
+  Serial.println("Starting timer0");
+  #endif
   noInterrupts();
   timer0_isr_init();
   timer0_attachInterrupt(timer_0_ISR);

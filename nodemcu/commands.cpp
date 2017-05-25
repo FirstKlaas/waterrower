@@ -12,6 +12,7 @@ void cmdNone(uint8_t* payload, uint16_t length) {
 }
 
 void cmdStartSession(uint8_t* payload, unsigned int length) {
+  if (is_measuring()) return;
   setSession(payload[0],payload[1]);
   setUsingFakeDevice(payload[2] == DEVICE_HARDWARE ? false : true); 
   #ifdef DEBUG
@@ -24,6 +25,7 @@ void cmdStartSession(uint8_t* payload, unsigned int length) {
 }
 
 void cmdStopSession(uint8_t* payload, unsigned int length) {
+  if (!is_measuring()) return;
   #ifdef DEBUG
   Serial.println("STOP SESSION");  
   #endif

@@ -17,6 +17,7 @@ app.get('/', function (req, res) {
 	res.sendFile(__dirname + '/public/index.html');
 });
 
+/**
 app.get('/opp', function (req, res) {
     res.setHeader("Content-Type", conf.json_content_type);
     db.all("SELECT * FROM opportunities", function (err, rows) {
@@ -48,6 +49,7 @@ app.get('/user/:id', function (req, res) {
         res.json({ "user" : row });
     });
 });
+**/
 
 // Websocket
 io.sockets.on('connection', function (socket) {

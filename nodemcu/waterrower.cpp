@@ -24,12 +24,15 @@ CommandPtr head = NULL;
  */
 volatile unsigned long tick     = 0;         // Counts the signals coming from the waterrower
 volatile unsigned long lasttick = 0;         // Saves the last tick
-volatile float meter_per_second = 0.0;       // As the name says. Value for meter per second
+volatile unsigned long meter_per_second = 0.0;       // As the name says. Value for meter per second
 volatile unsigned long seconds  = 0;         // Seconds the workout is running
 volatile float distance         = 0.0;       // Distance in meters for this workout              
 
 unsigned long last_seconds = 0;              // Which 'seconds' value was send the last time
 
+volatile unsigned long avg_speed_sum = 0;
+volatile unsigned long max_speed     = 0;
+ 
 /**
  * 4.805 ticks (interrupts) is equal to one meter distance.
  */
@@ -41,7 +44,7 @@ const unsigned long debounceDelay = 20;       // Duration in millis to ignore in
 volatile boolean measuring_running = false;
 
 byte mac[6];                                  // Buffer for storing the MAC Address.
-uint8_t data[10];                             // Waterrower Data Array
+uint8_t data[14];                             // Waterrower Data Array
 char clientid[18];
 
 uint8_t sessionid_low  = 0;                      // Session ID we got from the server (Low Byte)
@@ -258,6 +261,8 @@ void reset() {
   seconds = 0;  
   last_seconds = 0;
   distance = 0.0;
+  avg_speed_sum = 0;
+  max_speed = 0;
 }
 
 /**
@@ -288,10 +293,29 @@ void setupMqtt(const char* server) {
   client.setCallback(callback);  
 }
 
+void logToSportshub(LEVEL lvl, const char* message) {
+  if (client.connected()) {
+    switch(lvl) {
+      case DEBUG:
+        client.publish("sportshub/log/debug",message);
+        break;
+      default:
+        break;
+    }
+  } else {
+    #ifdef DEBUG
+    Serial.println("Local logging message");
+    #endif
+  }
+  
+}
+
 void sendWaterrowerData(void) {
   // save the seconds value for this method to avoid race conditions
   unsigned long m_seconds  = getSeconds();
   unsigned long m_tick     = getTicks();
+  unsigned long m_avg_speed_sum = avg_speed_sum;
+  
   float m_meter_per_second = getMeterPerSecond(); 
   
   if (!client.connected()) {
@@ -313,26 +337,31 @@ void sendWaterrowerData(void) {
           m_meter_per_second = random(100);
           m_tick = random(32000);
         }
-        unsigned long m_speed    = (unsigned long) (m_meter_per_second * 100);
+        unsigned long m_speed    = (unsigned long) (m_meter_per_second);
         unsigned long m_distance = getDistance(m_tick);
-
-        data[0] = getSessionHigh();
-        data[1] = getSessionLow();
-        data[2] = highByte(m_tick);
-        data[3] = lowByte(m_tick);
-        data[4] = highByte(m_seconds);
-        data[5] = lowByte(m_seconds);
-        data[6] = highByte(m_speed);
-        data[7] = lowByte(m_speed);
-        data[8] = highByte(m_distance);
-        data[9] = lowByte(m_distance);
+        unsigned long m_avg_speed = (unsigned long) (m_avg_speed_sum / m_seconds);
+        
+        data[0]  = getSessionHigh();
+        data[1]  = getSessionLow();
+        data[2]  = highByte(m_tick);
+        data[3]  = lowByte(m_tick);
+        data[4]  = highByte(m_seconds);
+        data[5]  = lowByte(m_seconds);
+        data[6]  = highByte(m_speed);
+        data[7]  = lowByte(m_speed);
+        data[8]  = highByte(m_distance);
+        data[9]  = lowByte(m_distance);
+        data[10] = highByte(max_speed);
+        data[11] = lowByte(max_speed);
+        data[12] = highByte(m_avg_speed);
+        data[13] = lowByte(m_avg_speed);
         
         #ifdef DEBUG
         sprintf(message,"%u;%u;%u;%u",m_tick, m_seconds, m_speed, m_distance);
         Serial.println(message);
         #endif
         
-        client.publish("sportshub/data",data, 10);
+        client.publish("sportshub/data",data, 14);
         markTime(m_seconds);
       } else {
         #ifdef DEBUG
@@ -362,7 +391,11 @@ void timer_0_ISR(void) {
     seconds++;    
     unsigned long current_tick = tick;
     distance = (float) (current_tick - lasttick);
-    meter_per_second = distance / ratio;
+    meter_per_second = (distance*100) / ratio;
+    if (max_speed < meter_per_second) {
+      max_speed = meter_per_second;
+    }
+    avg_speed_sum += meter_per_second;
     lasttick = current_tick;
   }
   timer0_write(ESP.getCycleCount() + 80000000); //80Mhz -> 80*10^6 = 1 second

@@ -7,6 +7,13 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+enum LEVEL {
+  DEBUG,
+  INFO,
+  WARN,
+  FATAL
+};
+
 typedef void (* CmdFunction) (uint8_t* payload, uint16_t length);
 
 void registerCommand(uint8_t id, CmdFunction func);
@@ -17,6 +24,7 @@ void runCommand(uint8_t id, uint8_t* payload, unsigned int length);
 
 uint8_t sizeCommand();
 
+void logToSportshub(LEVEL lvl, const char* message);
 
 const int ROWER_PIN = 4;
 const int LED_PIN   = 5;

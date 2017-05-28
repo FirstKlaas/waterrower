@@ -1,9 +1,9 @@
 #include "waterrower.h"
-/** 
- */
+/**
+*/
 //#define DEBUG
 
-WiFiClient espClient; 
+WiFiClient espClient;
 PubSubClient client(espClient);
 
 typedef struct Command Command;
@@ -18,29 +18,29 @@ struct Command {
 CommandPtr head = NULL;
 
 /**
- * These are the variables that are modified by the ISR. Therefor they are declared as volatile.
- * This ensures that any read to this variables will be done in memory and not on behalf of a
- * cached value.
- */
+   These are the variables that are modified by the ISR. Therefor they are declared as volatile.
+   This ensures that any read to this variables will be done in memory and not on behalf of a
+   cached value.
+*/
 volatile unsigned long tick     = 0;         // Counts the signals coming from the waterrower
 volatile unsigned long lasttick = 0;         // Saves the last tick
 volatile unsigned long meter_per_second = 0.0;       // As the name says. Value for meter per second
 volatile unsigned long seconds  = 0;         // Seconds the workout is running
-volatile float distance         = 0.0;       // Distance in meters for this workout              
+volatile float distance         = 0.0;       // Distance in meters for this workout
 
 unsigned long last_seconds = 0;              // Which 'seconds' value was send the last time
 
 volatile unsigned long avg_speed_sum = 0;
 volatile unsigned long max_speed     = 0;
- 
+
 /**
- * 4.805 ticks (interrupts) is equal to one meter distance.
- */
+   4.805 ticks (interrupts) is equal to one meter distance.
+*/
 const float ratio = 4.805;
 
 volatile long lastDebounceTime = 0;           // the last time the output pin was toggled in millis
 const unsigned long debounceDelay = 20;       // Duration in millis to ignore interrupts
-                                              // slower than STOP_SPEED before a new session can start.
+// slower than STOP_SPEED before a new session can start.
 volatile boolean measuring_running = false;
 
 byte mac[6];                                  // Buffer for storing the MAC Address.
@@ -57,7 +57,7 @@ char message[80];                             // Buffer for the message
 #endif
 
 
-void setSession(uint8_t high,uint8_t low) {
+void setSession(uint8_t high, uint8_t low) {
   sessionid_high = high;
   sessionid_low  = low;
 }
@@ -80,23 +80,23 @@ uint8_t getSessionLow() {
 
 
 /*
- * true if measuring currently is running, false else.
- * If not measuring, no values will be published to 
- * the mqtt server.
- */
+   true if measuring currently is running, false else.
+   If not measuring, no values will be published to
+   the mqtt server.
+*/
 boolean is_measuring() {
-  return measuring_running; 
+  return measuring_running;
 }
 
-const char hex[17]="0123456789ABCDEF";
+const char hex[17] = "0123456789ABCDEF";
 
-void ShowHex(byte convertByte){
-  Serial.print( hex[(convertByte >>4) & 0x0F]);
+void ShowHex(byte convertByte) {
+  Serial.print( hex[(convertByte >> 4) & 0x0F]);
   Serial.println( hex[convertByte & 0x0F]);
 }
 /**
- * Wandelt die MAC Adresse des in einen String um.
- */
+   Wandelt die MAC Adresse des in einen String um.
+*/
 const char* getClientID() {
   return clientid;
 }
@@ -104,27 +104,27 @@ const char* getClientID() {
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
-    #ifdef DEBUG
+#ifdef DEBUG
     Serial.print("Attempting MQTT connection...");
-    #endif
+#endif
     // Attempt to connect
     if (client.connect(getClientID())) {
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial.println("connected");
-      #endif
+#endif
       // Once connected, publish an announcement...
-      client.publish("sportshub","Waterrower connected");
-      client.publish("sportshub/device/connect",getClientID());
-      
+      client.publish("sportshub", "Waterrower connected");
+      client.publish("sportshub/device/connect", getClientID());
+
       String topic = String();
       topic += getClientID();
       topic += "/#";
       client.subscribe(topic.c_str());
-      
+
     } else {
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial.println("Wifi connection failed. I will try again in 5 seconds");
-      #endif
+#endif
       // Wait 5 seconds before retrying
       delay(5000);
     }
@@ -133,79 +133,79 @@ void reconnect() {
 
 void startWIFI(const char* ssid, const char* password) {
   uint8_t index = 0;
-  
+
   WiFi.begin(ssid, password);
-  
+
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    #ifdef DEBUG
-      Serial.print(".");
-    #endif
+#ifdef DEBUG
+    Serial.print(".");
+#endif
   }
 
-  #ifdef DEBUG
-    Serial.println("");
-    Serial.println("WiFi connected");  
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-  #endif  
-  
+#ifdef DEBUG
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+#endif
+
   WiFi.macAddress(mac);
-  
-  for (uint8_t i=0; i<6; i++) { 
-    
+
+  for (uint8_t i = 0; i < 6; i++) {
+
     clientid[index++] = (char) (hex[(mac[i] >> 4) & 0x0F]);
     clientid[index++] = (char) (hex[(mac[i]) & 0x0F]);
     if (i < 5) {
       clientid[index++] = ':';
     }
-    
+
   };
   clientid[index] = 0;
 
   /**
-  WiFi.begin(ssid, password);
+    WiFi.begin(ssid, password);
 
-  #ifdef DEBUG
-  if (verbose && WiFi.status() == WL_CONNECTED) {
+    #ifdef DEBUG
+    if (verbose && WiFi.status() == WL_CONNECTED) {
     Serial.println("");
     Serial.println("WiFi connected");
-  }
-  #endif
+    }
+    #endif
   **/
 }
 
 /**
- * The ISR that is called every time the waterrower gives a signal.
- * Ticke is updated. A debounce time is used to avoid ticks that come
- * frome bounces.
- */
+   The ISR that is called every time the waterrower gives a signal.
+   Ticke is updated. A debounce time is used to avoid ticks that come
+   frome bounces.
+*/
 void tick_ISR(void) {
   unsigned long m = millis();
   if (m - lastDebounceTime > debounceDelay) {
-    tick++;  
+    tick++;
   }
   lastDebounceTime = m;
 }
 
 void startISR() {
-  #ifdef DEBUG
+#ifdef DEBUG
   Serial.println("Attaching Rower ISR");
-  #endif
+#endif
   //attachInterrupt(digitalPinToInterrupt(ROWER_PIN), tick_ISR, FALLING);
 }
 
 void stopISR() {
-  #ifdef DEBUG
+#ifdef DEBUG
   Serial.println("Detaching Rower ISR");
-  #endif
-  //detachInterrupt(digitalPinToInterrupt(ROWER_PIN));  
+#endif
+  //detachInterrupt(digitalPinToInterrupt(ROWER_PIN));
 }
 
 /**
- * Prints the payload of a mqtt message as a string. This of course works
- * only, if the payload represnts a string.
- */
+   Prints the payload of a mqtt message as a string. This of course works
+   only, if the payload represnts a string.
+*/
 void printPayload(byte* payload, unsigned int length) {
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
@@ -214,12 +214,12 @@ void printPayload(byte* payload, unsigned int length) {
 }
 
 /**
- * Printes a binary payload in hexadecimal representation. 
- */
+   Printes a binary payload in hexadecimal representation.
+*/
 void printPayloadHex(byte* payload, unsigned int length) {
   for (int i = 0; i < length; i++) {
-    if (payload[i] < 16) Serial.print("0"); 
-    Serial.print(payload[i],HEX);
+    if (payload[i] < 16) Serial.print("0");
+    Serial.print(payload[i], HEX);
     Serial.print(" ");
   }
   Serial.println("");
@@ -227,9 +227,9 @@ void printPayloadHex(byte* payload, unsigned int length) {
 
 
 /**
- * Activates measuring. If not already measuring, this 
- * also resets internal variables for measurement.
- */
+   Activates measuring. If not already measuring, this
+   also resets internal variables for measurement.
+*/
 void startMeasuring() {
   if (measuring_running) return;
   reset();
@@ -239,10 +239,10 @@ void startMeasuring() {
 }
 
 /**
- * Stops the measurement.
- * The ISR will be detached, so no more ticks are counted.
- * All variables will be resetted.
- */
+   Stops the measurement.
+   The ISR will be detached, so no more ticks are counted.
+   All variables will be resetted.
+*/
 void stopMeasuring() {
   if (!measuring_running) return;
   stopISR();
@@ -252,13 +252,13 @@ void stopMeasuring() {
 }
 
 /**
- * Sets all variable back to their default value.
- * No tickes and no seconds.
- */
+   Sets all variable back to their default value.
+   No tickes and no seconds.
+*/
 void reset() {
   tick = 0;
   lasttick = 0;
-  seconds = 0;  
+  seconds = 0;
   last_seconds = 0;
   distance = 0.0;
   avg_speed_sum = 0;
@@ -266,48 +266,48 @@ void reset() {
 }
 
 /**
- * This is the callback method for the
- * MQTT Server. It gets called, whenever
- * the controller receives a message
- * from the MQTT server. It gets only messages
- * for toppics subscribed to.
- * 
- * Currently there's only one action. If the 
- * payload String equals "reset", the measuring
- * stops. This was only for testing.
- */
+   This is the callback method for the
+   MQTT Server. It gets called, whenever
+   the controller receives a message
+   from the MQTT server. It gets only messages
+   for toppics subscribed to.
+
+   Currently there's only one action. If the
+   payload String equals "reset", the measuring
+   stops. This was only for testing.
+*/
 void callback(char* topic, byte* payload, unsigned int length) {
   // handle message arrived
-  #ifdef DEBUG
+#ifdef DEBUG
   Serial.println("Received mqtt message.");
   Serial.print("Topic: ");
   Serial.println(topic);
   Serial.print("Payload: ");
   printPayloadHex(payload, length);
-  #endif
-  runCommand(payload[0],&payload[1], length-1);
+#endif
+  runCommand(payload[0], &payload[1], length - 1);
 }
 
 void setupMqtt(const char* server) {
   client.setServer(server, 1883);
-  client.setCallback(callback);  
+  client.setCallback(callback);
 }
 
 void logToSportshub(LEVEL lvl, const char* message) {
   if (client.connected()) {
-    switch(lvl) {
+    switch (lvl) {
       case DEBUG:
-        client.publish("sportshub/log/debug",message);
+        client.publish("sportshub/log/debug", message);
         break;
       default:
         break;
     }
   } else {
-    #ifdef DEBUG
+#ifdef DEBUG
     Serial.println("Local logging message");
-    #endif
+#endif
   }
-  
+
 }
 
 void sendWaterrowerData(void) {
@@ -315,24 +315,24 @@ void sendWaterrowerData(void) {
   unsigned long m_seconds  = getSeconds();
   unsigned long m_tick     = getTicks();
   unsigned long m_avg_speed_sum = avg_speed_sum;
-  
-  float m_meter_per_second = getMeterPerSecond(); 
-  
+
+  float m_meter_per_second = getMeterPerSecond();
+
   if (!client.connected()) {
-    #ifdef DEBUG
+#ifdef DEBUG
     Serial.println("Reconnecting mqtt");
-    #endif
-      
+#endif
+
     reconnect();
   }
-  
+
   if (client.loop()) {
     if (is_measuring()) { //
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial.print(".");
-      #endif
+#endif
       if (m_seconds > getLastSeconds()) { //
-        
+
         if (isUsingFakeDevice()) {
           m_meter_per_second = random(100);
           m_tick = random(32000);
@@ -340,7 +340,7 @@ void sendWaterrowerData(void) {
         unsigned long m_speed    = (unsigned long) (m_meter_per_second);
         unsigned long m_distance = getDistance(m_tick);
         unsigned long m_avg_speed = (unsigned long) (m_avg_speed_sum / m_seconds);
-        
+
         data[0]  = getSessionHigh();
         data[1]  = getSessionLow();
         data[2]  = highByte(m_tick);
@@ -355,43 +355,43 @@ void sendWaterrowerData(void) {
         data[11] = lowByte(max_speed);
         data[12] = highByte(m_avg_speed);
         data[13] = lowByte(m_avg_speed);
-        
-        #ifdef DEBUG
-        sprintf(message,"%u;%u;%u;%u",m_tick, m_seconds, m_speed, m_distance);
+
+#ifdef DEBUG
+        sprintf(message, "%u;%u;%u;%u", m_tick, m_seconds, m_speed, m_distance);
         Serial.println(message);
-        #endif
-        
-        client.publish("sportshub/data",data, 14);
+#endif
+
+        client.publish("sportshub/data", data, 14);
         markTime(m_seconds);
       } else {
-        #ifdef DEBUG
+#ifdef DEBUG
         Serial.println("Too early to update");
-        #endif      
+#endif
       }
     } else {
-      #ifdef DEBUG
+#ifdef DEBUG
       Serial.println("Not measuring.");
-      #endif
+#endif
     }
   } else {
-    #ifdef DEBUG
+#ifdef DEBUG
     Serial.println("No loop");
-    #endif    
-  }  
+#endif
+  }
 }
 
 /**
- * The interrupt service routine (ISR) that is called every second. 
- * If measuring, then the following variables will be updated.
- * 
- * seconds, meter_per_second, lasttick
- */
+   The interrupt service routine (ISR) that is called every second.
+   If measuring, then the following variables will be updated.
+
+   seconds, meter_per_second, lasttick
+*/
 void timer_0_ISR(void) {
   if (is_measuring()) {
-    seconds++;    
+    seconds++;
     unsigned long current_tick = tick;
     distance = (float) (current_tick - lasttick);
-    meter_per_second = (distance*100) / ratio;
+    meter_per_second = (distance * 100) / ratio;
     if (max_speed < meter_per_second) {
       max_speed = meter_per_second;
     }
@@ -402,13 +402,13 @@ void timer_0_ISR(void) {
 }
 
 /**
- * Initialiert den Timer 0. 
- * Jede Sekunde wird die Funktion timer_0_isr() aufgerufen.
- */
+   Initialiert den Timer 0.
+   Jede Sekunde wird die Funktion timer_0_isr() aufgerufen.
+*/
 void startClock() {
-  #ifdef DEBUG
+#ifdef DEBUG
   Serial.println("Starting timer0");
-  #endif
+#endif
   noInterrupts();
   timer0_isr_init();
   timer0_attachInterrupt(timer_0_ISR);
@@ -442,12 +442,12 @@ void markTime(unsigned long seconds) {
 
 void registerCommand(uint8_t id, CmdFunction func) {
   if (getCommand(id) != NULL) return;
-   
+
   CommandPtr cmd = (CommandPtr) malloc(sizeof(Command));
   cmd->id   = id;
   cmd->func = func;
   cmd->next = NULL;
-  
+
   if (head != NULL) {
     cmd->next = head;
   }
@@ -459,7 +459,7 @@ CmdFunction getCommand(uint8_t id) {
   CommandPtr cursor = head;
   while (cursor != NULL) {
     if (cursor->id == id) return cursor->func;
-    cursor = cursor->next;  
+    cursor = cursor->next;
   }
   return NULL;
 }
@@ -469,16 +469,16 @@ uint8_t sizeCommand() {
   uint8_t size = 0;
   while (cursor != NULL) {
     size++;
-    cursor = cursor->next;  
+    cursor = cursor->next;
   }
   return size;
-  
+
 }
 
 void runCommand(uint8_t id, uint8_t* payload, unsigned int length) {
   CmdFunction cmd = getCommand(id);
   if (cmd != NULL) {
-    cmd(payload,length);
+    cmd(payload, length);
   }
 }
 

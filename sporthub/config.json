@@ -1,6 +1,7 @@
 {
 	"port": 9090,
 	"static_dir" : "public",
-	"database" : "db/opportunities.db",
-    "json_content_type" : "application/json"
+	"database" : "db/sporthub.db",
+    "json_content_type" : "application/json",
+    "mqttserver" : "blender"
 }

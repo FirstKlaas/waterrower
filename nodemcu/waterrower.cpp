@@ -291,6 +291,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void setupMqtt(const char* server) {
   client.setServer(server, 1883);
   client.setCallback(callback);
+  client.publish("sportshub/device/register", mac, 6);
 }
 
 void logToSportshub(LEVEL lvl, const char* message) {

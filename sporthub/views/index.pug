@@ -1,0 +1,25 @@
+html
+  head
+    title "User List"
+    link(
+      href="https://fonts.googleapis.com/css?family=Amatic+SC",
+      rel="stylesheet"
+    )
+    link(
+      href="css/design.css",
+      rel="stylesheet"
+    )  
+    script(
+      language="javascript",
+      type="text/javascript",
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"
+    )    
+    script( 
+      language="javascript" type="text/javascript" 
+      src="https://code.jquery.com/jquery-3.1.1.min.js"
+    )  
+  body
+    ul
+      each user in users
+        li [#{user.id}] #{user.firstname} #{user.lastname} (#{user.login}) 
+          a(href='sessions.html') Sessions

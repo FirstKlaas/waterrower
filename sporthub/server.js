@@ -13,6 +13,7 @@ var backend = require('./database.js')(db);
 
 // Statische Files aus diesem Pfad ausliefern
 app.use(express.static(conf.static_dir));
+app.set('view engine', 'pug');
 
 /* 
 * MQTT Einrichten
@@ -80,10 +81,26 @@ mqtt_client.on('message', function (topic, message) {
 
 // wenn der Pfad / aufgerufen wird
 app.get('/', function (req, res) {
-	// so wird die Datei index.html ausgegeben
-	res.sendFile(__dirname + '/public/index.html');
+    let users = backend.getUsers(
+        function(err) {
+            res.status(500).send({'err':err})
+        },
+        function(users) {
+            res.render('index', { 'users': users});
+        }
+    )
 });
 
+app.get('/users.html', function (req, res) {
+    let users = backend.getUsers(
+        function(err) {
+            res.status(500).send({'err':err})
+        },
+        function(users) {
+            res.render('index', { 'users': users});
+        }
+    )
+});
 
 app.get('/rest', function(req, res, next) {
     res.setHeader("Content-Type", conf.json_content_type);

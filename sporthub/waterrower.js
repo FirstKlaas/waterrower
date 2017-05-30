@@ -28,6 +28,7 @@ class Waterrower {
 	}
 
 	stopSession(mac, sessionid) {
+		
         const payload = Buffer.allocUnsafe(3);
         payload[0] = STOP_SESSION_CMD;  // CMD Stop Session
         payload[1] = (sessionid >> 8) & 0xFF;

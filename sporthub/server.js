@@ -21,6 +21,9 @@ var mqtt_client  = mqtt.connect('mqtt://' + conf.mqttserver);
 
 const waterrower = require('./waterrower.js')(mqtt_client);
 
+app.set('backend',backend);
+app.set('waterrower',waterrower);
+
 mqtt_client.on('connect', function () {
     waterrower.onConnect();
     console.log("connected to mqtt server @ " + conf.mqttserver);
@@ -43,11 +46,35 @@ function getWaterrowerDataObj(payload) {
     return data;        
 }
 
+const hex = '0123456789ABFDEF';
+
+function byteToHexString(b) {
+    let result = '';
+    result += hex[(b >> 4) & 0x0F];
+    result += hex[b & 0x0F];
+    return result;   
+}
+
 mqtt_client.on('message', function (topic, message) {
-  // message is Buffer 
-    //console.log(topic.toString())
+    // message is Buffer 
+    console.log('Got message. Topic: ' + topic.toString());
     if (topic === 'sportshub/data') {
         backend.insertSessionEntry(getWaterrowerDataObj(message));
+    } else {
+        if (topic === 'sportshub/device/connect') {
+            console.log("Device registered. Now converting mac address from payload.");
+            //TODO: Converting mac adress
+            /**
+            console.log('B0 = ' + message[0]); 
+            let clientString =  byteToHexString(message[0]) + ':';
+            clientString     += byteToHexString(message[1]) + ':';  
+            clientString     += byteToHexString(message[2]) + ':';  
+            clientString     += byteToHexString(message[3]) + ':';  
+            clientString     += byteToHexString(message[4]) + ':';  
+            clientString     += byteToHexString(message[5])
+            **/  
+            console.log(message.toString()); 
+        }
     }
 })
 
@@ -58,171 +85,16 @@ app.get('/', function (req, res) {
 });
 
 
-app.get('/user', function (req, res) {
+app.get('/rest', function(req, res, next) {
     res.setHeader("Content-Type", conf.json_content_type);
-    backend.getUsers(function (data) {
-        res.json(data);
-    });
-});
-
-app.get('/user/:userid', function (req, res) {
-    res.setHeader("Content-Type", conf.json_content_type);
-    backend.getUser(req.params.userid, function(data) {
-       res.json(data); 
-    })
-});
-
-app.get('/session', function (req, res) {
-    res.setHeader("Content-Type", conf.json_content_type);
-    backend.getSessions(function (data) {
-        res.json(data);
-    });
+    next('route');
 });
 
 
-/**
-* Creates a new Session in the database for the given user.
-* A "start_session" command is "send" to the waterrower.
-*
-* author        : Klaas Nebuhr
-* since         : 17/05/27
-* last-modified : 17/05/27
-*
-* TODO:
-*   - Check if the user exists
-*   - Check if the device exists
-**/
-app.get('/session/start/:userid/:deviceid', function(req, res) {
-    res.setHeader("Content-Type", conf.json_content_type);
-    let device = null;
+require('./rest/user.js')(app);
+require('./rest/session.js')(app);
+require('./rest/device.js')(app);
 
-    backend.getDevice(req.params.deviceid, 
-        function(err) {
-            // Database error
-            res.status(400).json({"err" : err});
-        },
-        function(device) {
-            if (device) {
-                backend.startSession(req.params.userid,req.params.deviceid, 
-                    function(err) {
-                        // Database error
-                        res.status(400).json({"err" : err});
-                    }, 
-                    function(sessionid) {
-                        if (sessionid) {
-
-                            // Session successfully created
-                            res.json({ "sessionid" : sessionid });
-                            waterrower.startSession(device.mac,sessionid);
-                        } else {
-                            res.status(404).json({});
-                        }
-                    }
-
-                );
-            } else {
-                // No device found
-                res.status(404).json({"err" : "No such device"});
-            }        
-        }
-    );
-});
-
-/**
-* Stops the Session referenced by sessionid.
-* The session values of the session entry in the database are
-* updated according to the last waterrower values.
-*
-* A "stop_session" command is "send" to the waterrower.
-*
-* author        : Klaas Nebuhr
-* since         : 17/05/27
-* last-modified : 17/05/27
-*
-* TODO:
-*   - Check if the session exists
-*   - Updating the session values
-*   
-**/
-app.get('/session/stop/:sessionid', function(req, res) {
-    backend.stopSession(req.params.sessionid, function(err) {
-        res.status(400).json({"err" : err});
-    }, function(device) {
-        if (device) {
-            /* Session stopped successfully */
-            waterrower.stopSession(device.mac,req.params.sessionid);
-            /* No data in this case */      
-            res.json({"device":device});
-        } else {
-            res.status(404).json({});
-        }
-    });
-});
-
-app.get('/session/:sessionid', function (req, res) {
-    res.setHeader("Content-Type", conf.json_content_type);
-    backend.getSession(req.params.sessionid, function(data) {
-        res.json(data);
-    })
-});
-
-app.get('/user/:userid/session', function (req, res) {
-    res.setHeader("Content-Type", conf.json_content_type);
-    backend.getUserSessions(req.params.userid, function(data) {
-        res.json(data);    
-    })
-});
-
-app.get('/session/:sessionid/entry', function (req, res) {
-    res.setHeader("Content-Type", conf.json_content_type);
-    backend.getSessionEntries(req.params.sessionid, function(data) {
-        res.json(data);
-    })
-});
-
-app.get('/session/:sessionid/entry/:minsec/:maxsec', function (req, res) {
-    res.setHeader("Content-Type", conf.json_content_type);
-    db.all("SELECT * FROM session_entry WHERE session_id=? AND seconds <= ? AND seconds >= ? ORDER BY seconds ASC",[req.params.sessionid, req.params.minsec, req.params.maxsec], function (err, rows) {
-        res.json({ "session_entry" : rows });
-    });
-});
-
-app.get('/device/active/:id', function(req, res) {
-    backend.isDeviceActive(req.params.id,
-        function(err) {
-            res.status(400).json({"err":err});
-        },
-        function(session) {
-            if (session) {
-                res.json({
-                    "active" : true,
-                    "session" : session
-                })
-            } else {
-                res.json({
-                    "active" : false
-                })
-            }
-        }
-    );
-});
-
-
-app.get('/device/:id', function(req, res) {
-    backend.getDevice(
-        req.params.id,
-        function(err) {
-            res.status(400).json({"err": err});
-        },
-        function(device) {
-            if (device) {
-                res.json({"device": device});
-            } else {
-                res.status(404).json({"deviceid" : req.params.id});
-            }
-        }
-    ); 
-});
 
 // Websocket
 io.sockets.on('connection', function (socket) {

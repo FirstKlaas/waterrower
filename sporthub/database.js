@@ -8,36 +8,36 @@ class Backend {
 		console.log('constructor');
 	}
 
-	getUsers(clbk) {
+	getUsers(onError, onSuccess) {
 		this.db.all("SELECT * FROM user", function(err, rows) {
 			if (err) {
-            	clbk({ "err" : err });
+            	onError(err);
         	} else {
-            	clbk({ "user" : rows });
+            	onSuccess(rows);
             }
         });
 	}
 
-	getUser(id, clbk) {
+	getUser(id, onError, onSuccess) {
 	    this.db.all("SELECT * FROM user WHERE id=?", [id],function (err, rows) {
 			if (err) {
-            	clbk({ "err" : err });
+            	onError(err);
         	} else {
         		if (rows.length === 0) {
-        			clbk({ "user" : null });	
+        			onSuccess(null);	
         		} else {
-            		clbk({ "user" : rows[0] });
+            		onSuccess(rows[0]);
             	}
             }
     	});
 	}
 
-	getSessions(clbk) {
+	getSessions(onError, onSuccess) {
 	    this.db.all("SELECT * FROM session", function (err, rows) {
 			if (err) {
-            	clbk({ "err" : err });
+            	onError(err);
         	} else {
-            	clbk({ "sessions" : rows });
+            	onSuccess(rows);
             }
 	    });
 	}
@@ -122,13 +122,15 @@ class Backend {
 					// dieses device.
 					return onSuccess(null); 
 				} else {
-					database.run("INSERT into session(user_id,device_id, active) VALUES (?,?,1)",[userid,deviceid],function(err) {
-						if (err) {
-							onError(err);
-						} else {
-							onSuccess(this.lastID);
-						}
-			    	});					
+					database.run("INSERT into session(user_id,device_id, active) VALUES (?,?,1)",[userid,deviceid],
+						function(err) {
+							if (err) {
+								onError(err);
+							} else {
+								onSuccess(this.lastID);
+							}
+			    		}
+			    	);					
 				}
 			}
 		)
@@ -145,6 +147,18 @@ class Backend {
 					} else {
 						onSuccess(rows[0]);
 					}
+				}
+			}
+		)
+	}
+
+	getDevices(onError, onSuccess) {
+		this.db.all("SELECT * FROM device ORDER BY human", 
+			function(err,rows) {
+				if (err) {
+					onError(err);
+				} else {
+					onSuccess(rows);
 				}
 			}
 		)

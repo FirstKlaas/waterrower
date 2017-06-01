@@ -1,6 +1,58 @@
+HTML {
+	margin: 0px;
+	padding: 0px;
+	height: 100%;
+}
+
 BODY {
 	background-color: #3C4941;
-	font-family: 'Amatic SC', cursive;
+	font-family: 'Dosis', sans-serif;
 	color: white;
-	font-size: 36pt;
+	font-size: 14pt;
+	margin: 0px;
+	padding: 0px;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
 }
+
+.row {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	width: 100%;
+}
+
+.headline {
+	padding-bottom: 2px;
+	border-bottom: 1px solid white;
+	margin-bottom: 5px;
+}
+
+.fixed60 {
+	flex: 0 0 60px;
+}
+
+.fixed120 {
+	flex: 0 0 120px;
+}
+
+.fixed180 {
+	flex: 0 0 180px;
+}
+
+.item {
+	flex: 1 1 auto;
+}
+
+A {
+	text-decoration: none;
+	color: white;
+}
+
+A:HOVER {
+	text-decoration: underline;
+	color: white;
+}
+

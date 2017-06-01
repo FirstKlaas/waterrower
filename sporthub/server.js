@@ -102,6 +102,29 @@ app.get('/users.html', function (req, res) {
     )
 });
 
+app.get('/sessions.html', function (req, res) {
+    let users = backend.getSessions(
+        function(err) {
+            res.status(500).send({'err':err})
+        },
+        function(sessions) {
+            res.render('sessions', { 'sessions': sessions});
+        }
+    )
+});
+
+app.get('/device/:id', function (req, res) {
+    let device = backend.getDevice(
+        req.params.id,
+        function(err) {
+            res.status(500).send({'err':err})
+        },
+        function(device) {
+            res.render('device', { 'device': device});
+        }
+    )
+})
+
 app.get('/rest', function(req, res, next) {
     res.setHeader("Content-Type", conf.json_content_type);
     next('route');

@@ -1,12 +1,16 @@
 html
   head
-    title "User List"
+    title Users
+    link(
+      href="https://fonts.googleapis.com/css?family=Dosis:400,600", 
+      rel="stylesheet"
+    )    
     link(
       href="https://fonts.googleapis.com/css?family=Amatic+SC",
       rel="stylesheet"
     )
     link(
-      href="css/design.css",
+      href="/css/design.css",
       rel="stylesheet"
     )  
     script(
@@ -19,7 +23,11 @@ html
       src="https://code.jquery.com/jquery-3.1.1.min.js"
     )  
   body
-    ul
-      each user in users
-        li [#{user.id}] #{user.firstname} #{user.lastname} (#{user.login}) 
+    each user in users
+      div.row 
+        div.item-fixed(style="width:60px") [#{user.id}] 
+        dic.item-fixed(style="width:120px") #{user.firstname} 
+        div.item #{user.lastname} 
+        div.item (#{user.login}) 
+        div.item 
           a(href='sessions.html') Sessions

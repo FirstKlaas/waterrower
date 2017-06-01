@@ -1,33 +1,15 @@
 html
   head
     title Users
-    link(
-      href="https://fonts.googleapis.com/css?family=Dosis:400,600", 
-      rel="stylesheet"
-    )    
-    link(
-      href="https://fonts.googleapis.com/css?family=Amatic+SC",
-      rel="stylesheet"
-    )
-    link(
-      href="/css/design.css",
-      rel="stylesheet"
-    )  
-    script(
-      language="javascript",
-      type="text/javascript",
-      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"
-    )    
-    script( 
-      language="javascript" type="text/javascript" 
-      src="https://code.jquery.com/jquery-3.1.1.min.js"
-    )  
+    include include/head.pug
   body
+    include include/menu.pug  
+    div.row.headline
+      div.fixed40 id 
+      div.fixed120 Name 
+      div.fixed120 Login 
     each user in users
       div.row 
-        div.item-fixed(style="width:60px") [#{user.id}] 
-        dic.item-fixed(style="width:120px") #{user.firstname} 
-        div.item #{user.lastname} 
-        div.item (#{user.login}) 
-        div.item 
-          a(href='sessions.html') Sessions
+        div.fixed40 [#{user.id}] 
+        div.fixed120 #{user.firstname} #{user.lastname} 
+        div.fixed120 (#{user.login}) 

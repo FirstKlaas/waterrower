@@ -17,17 +17,53 @@ BODY {
 	flex-wrap: nowrap;
 }
 
+.menu {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	width: 100%;	
+	font-weight: 600;
+	background-color: white;
+	margin-bottom: 10px; 
+	cursor: pointer;
+}
+
+.menu-item {
+	display: flex;
+	flex: 0 0 auto;
+	padding: 1px 10px;
+	color: #3C4941;
+}
+
+.menu-item:HOVER {
+	background-color: #efefef;
+}
+
+.menu-item A {
+	text-decoration: none;
+	color: #3C4941;
+}
+
 .row {
 	display: flex;
 	flex-direction: row;
 	flex-wrap: nowrap;
 	width: 100%;
+	padding: 0px 20px;
 }
 
 .headline {
 	padding-bottom: 2px;
 	border-bottom: 1px solid white;
 	margin-bottom: 5px;
+}
+
+.fixed20 {
+	flex: 0 0 20px;
+}
+
+.fixed40 {
+	flex: 0 0 40px;
 }
 
 .fixed60 {
@@ -46,12 +82,15 @@ BODY {
 	flex: 1 1 auto;
 }
 
-A {
+.right {
+	align-self: flex-end;
+}
+.row A {
 	text-decoration: none;
 	color: white;
 }
 
-A:HOVER {
+.row A:HOVER {
 	text-decoration: underline;
 	color: white;
 }

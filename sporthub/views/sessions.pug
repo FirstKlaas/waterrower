@@ -1,30 +1,11 @@
 html
   head
     title Sessions
-    link(
-      href="https://fonts.googleapis.com/css?family=Amatic+SC",
-      rel="stylesheet"
-    )
-    link(
-      href="https://fonts.googleapis.com/css?family=Dosis:400,600", 
-      rel="stylesheet"
-    )
-    link(
-      href="/css/design.css",
-      rel="stylesheet"
-    )  
-    script(
-      language="javascript",
-      type="text/javascript",
-      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"
-    )    
-    script( 
-      language="javascript" type="text/javascript" 
-      src="https://code.jquery.com/jquery-3.1.1.min.js"
-    )  
+    include include/head.pug
   body
+    include include/menu.pug
     div.row.headline 
-      div.fixed60 id 
+      div.fixed40 id 
       div.fixed120 Distance 
       div.fixed120 Max. Speed 
       div.fixed120 Avg. Speed 
@@ -36,10 +17,10 @@ html
 
     each session in sessions
       div.row 
-        div.fixed60 [#{session.id}] 
-        div.fixed120 #{session.distance} m 
-        div.fixed120 #{session.max_speed} m/s 
-        div.fixed120 #{session.avg_speed} m/s 
+        div.fixed40 [#{session.id}] 
+        div.fixed120.right #{session.distance} m 
+        div.fixed120.right #{session.max_speed} m/s 
+        div.fixed120.right #{session.avg_speed} m/s 
         div.fixed180 #{session.start} 
         div.fixed180 #{session.end} 
         div.fixed60

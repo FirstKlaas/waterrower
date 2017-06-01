@@ -1,32 +1,21 @@
 html
   head
     title Device
-    link(
-      href="https://fonts.googleapis.com/css?family=Amatic+SC",
-      rel="stylesheet"
-    )
-    link(
-      href="https://fonts.googleapis.com/css?family=Dosis:400,600", 
-      rel="stylesheet"
-    )
-    link(
-      href="/css/design.css",
-      rel="stylesheet"
-    )  
-    script(
-      language="javascript",
-      type="text/javascript",
-      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"
-    )    
-    script( 
-      language="javascript" type="text/javascript" 
-      src="https://code.jquery.com/jquery-3.1.1.min.js"
-    )  
+    include include/head.pug
   body
-    .row
-      .fixed60 &nbsp;
-      .fixed60 #{device.id}
-      .fixed180 #{device.mac}
-      .fixed120 #{device.human}
-      .fixed60 #{device.active}    
+    include include/menu.pug
+    div.row.headline 
+      .fixed40 id
+      .fixed180 MAC Address
+      .fixed120 Human Name
+      .fixed60 Active    
+    each device in devices
+      .row
+        .fixed40 [#{device.id}]
+        .fixed180 #{device.mac}
+        .fixed120 #{device.human}
+        if (device.active == 1)
+          .fixed60 yes
+        else
+          .fixed60 no  
 

@@ -113,6 +113,17 @@ app.get('/sessions.html', function (req, res) {
     )
 });
 
+app.get('/devices.html', function (req, res) {
+    let devices = backend.getDevices(
+        function(err) {
+            res.status(500).send({'err':err})
+        },
+        function(devices) {
+            res.render('device', { 'devices': devices});
+        }
+    )
+})
+
 app.get('/device/:id', function (req, res) {
     let device = backend.getDevice(
         req.params.id,
@@ -120,7 +131,7 @@ app.get('/device/:id', function (req, res) {
             res.status(500).send({'err':err})
         },
         function(device) {
-            res.render('device', { 'device': device});
+            res.render('device', { 'devices': [device]});
         }
     )
 })

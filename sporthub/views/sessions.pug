@@ -1,0 +1,53 @@
+html
+  head
+    title Sessions
+    link(
+      href="https://fonts.googleapis.com/css?family=Amatic+SC",
+      rel="stylesheet"
+    )
+    link(
+      href="https://fonts.googleapis.com/css?family=Dosis:400,600", 
+      rel="stylesheet"
+    )
+    link(
+      href="/css/design.css",
+      rel="stylesheet"
+    )  
+    script(
+      language="javascript",
+      type="text/javascript",
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"
+    )    
+    script( 
+      language="javascript" type="text/javascript" 
+      src="https://code.jquery.com/jquery-3.1.1.min.js"
+    )  
+  body
+    div.row.headline 
+      div.fixed60 id 
+      div.fixed120 Distance 
+      div.fixed120 Max. Speed 
+      div.fixed120 Avg. Speed 
+      div.fixed180 Start 
+      div.fixed180 End 
+      div.fixed60 User 
+      div.fixed60 Device
+      div.item Active
+
+    each session in sessions
+      div.row 
+        div.fixed60 [#{session.id}] 
+        div.fixed120 #{session.distance} m 
+        div.fixed120 #{session.max_speed} m/s 
+        div.fixed120 #{session.avg_speed} m/s 
+        div.fixed180 #{session.start} 
+        div.fixed180 #{session.end} 
+        div.fixed60
+          a(href='/user/' + session.user_id) #{session.user_id} 
+        div.fixed60
+          a(href='/device/' + session.device_id) #{session.device_id}
+        if (session.active != 0)  
+          div.item Active
+        else
+          div.item &nbsp;
+  

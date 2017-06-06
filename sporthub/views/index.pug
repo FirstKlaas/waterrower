@@ -1,15 +1,6 @@
 html
   head
-    title Users
+    title Waterrower
     include include/head.pug
   body
-    include include/menu.pug  
-    div.row.headline
-      div.fixed40 id 
-      div.fixed120 Name 
-      div.fixed120 Login 
-    each user in users
-      div.row 
-        div.fixed40 [#{user.id}] 
-        div.fixed120 #{user.firstname} #{user.lastname} 
-        div.fixed120 (#{user.login}) 
+    #content

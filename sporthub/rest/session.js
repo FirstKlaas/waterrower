@@ -15,6 +15,17 @@ var exports = module.exports = (app) => {
 	});
 
 
+	app.get('/rest/session/active', function (req, res) {
+	    backend.getActiveSessions(
+	        function (err) {
+	            res.status(500).json({"err":err});
+	        },
+	        function (data) {
+	            res.json({"sessions":data});
+	        }
+	    );
+	});
+
 	/**
 	* Creates a new Session in the database for the given user.
 	* A "start_session" command is "send" to the waterrower.
@@ -49,18 +60,12 @@ var exports = module.exports = (app) => {
 	                        // Database error
 	                        res.status(500).json({"err" : err});
 	                    }, 
-	                    function(sessionid) {
-	                        if (sessionid) {
-
-	                            // Session successfully created
-	                            res.json({ "sessionid" : sessionid });
-	                            waterrower.startSession(device.mac,sessionid);
-	                        } else {
-	                            res.status(404).json({
-	                            	"userid"   : req.params.userid,
-	                            	"deviceid" : req.params.deviceid
-	                            });
-	                        }
+	                    function(session) {
+	                        res.json({"session" : session});
+	                        waterrower.startSession(device.mac,session.id);
+	                        console.log('Sending start command to mqtt session id = ' + session.id)
+	                
+	                        waterrower.startSession()
 	                    }
 
 	                );
@@ -95,10 +100,11 @@ var exports = module.exports = (app) => {
 	        }, 
 	        function(device) {
 	            if (device) {
-	                /* Session stopped successfully */
+	                /* Session stopped successfully in database */
+	                /* Now sending stop command to the device   */
 	                waterrower.stopSession(device.mac,req.params.sessionid);
 	                /* No data in this case */      
-	                res.json({"device":device});
+	                res.json({});
 	            } else {
 	                res.status(404).json({});
 	            }

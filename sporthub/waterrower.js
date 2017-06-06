@@ -23,7 +23,7 @@ class Waterrower {
         payload[0] = START_SESSION_CMD;        // CMD StartSession
         payload[1] = (id >> 8) & 0xFF // HighByte Session
         payload[2] = id & 0xFF;       // Lowbyte Session
-        payload[3] = FAKE_DEVICE               // Using Fake Device
+        payload[3] = REAL_DEVICE; // FAKE_DEVICE               // Using Fake Device
         this.mqtt.publish(mac, payload);
 	}
 

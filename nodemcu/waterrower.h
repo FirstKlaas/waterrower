@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 enum LEVEL {
-  DEBUG,
+  DEBUG_LEVEL,
   INFO,
   WARN,
   FATAL

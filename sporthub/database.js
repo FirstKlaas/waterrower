@@ -5,7 +5,6 @@ var exports = module.exports = (db) => {
 class Backend {
 	constructor (db) {
 		this.db = db;
-		console.log('constructor');
 	}
 
 	getUsers(onError, onSuccess) {
@@ -33,7 +32,7 @@ class Backend {
 	}
 
 	getSessions(onError, onSuccess) {
-	    this.db.all("SELECT * FROM session", function (err, rows) {
+	    this.db.all("SELECT * FROM session ORDER BY id DESC", function (err, rows) {
 			if (err) {
             	onError(err);
         	} else {
@@ -56,15 +55,15 @@ class Backend {
     	});
 	}
 
-	getActiveSession(id, onError, onSuccess) {
-	    this.db.all("SELECT * FROM session WHERE id=? AND active=1", [id], function (err, rows) {
+	getActiveSessions(onError, onSuccess) {
+	    this.db.all("SELECT * FROM session WHERE session.active=1", function (err, rows) {
 			if (err) {
             	onError(err);
         	} else {
         		if (rows.length === 0) {
         			onSuccess(null);	
         		} else {
-        			onSuccess(rows[0]);
+        			onSuccess(rows);
         		}
             }
     	});
@@ -73,13 +72,12 @@ class Backend {
 	stopSession(id, onError, onSuccess) {
 		let self = this;
 		// First test, if there is a session at all.
-		this.getActiveSession(id,
+		this.getSession(id,
 			function(err) {
 				onError(err);
 			},
 			function(session) {
 				if (session) {
-					console.log("Trying to stop session " + session.id);
 					// Nun das device ermitteln.
 					self.getDevice(session.device_id,
 						function(err) {
@@ -109,8 +107,25 @@ class Backend {
 		);
 	}
 
+	stopActiveSessions() {
+		let self = this;
+		this.getActiveSessions(
+			function(err) {
+
+			},
+			function(sessions) {
+				if (sessions != null) {
+					sessions.forEach(function(session) {
+						self.stopSession(session.id, function(err){},function(device){});
+					})					
+				}
+			}
+		);
+	}
+
 	startSession(userid, deviceid, onError, onSuccess) {
 		let database = this.db;
+		let self = this;
 
 		this.isDeviceActive(deviceid, 
 			function(err) {
@@ -127,7 +142,20 @@ class Backend {
 							if (err) {
 								onError(err);
 							} else {
-								onSuccess(this.lastID);
+								let lastID = this.lastID;
+								self.getSession(this.lastID,
+									function(err) {
+	                            		onError(err);
+	                            	},
+	                            	function(data) {
+	                            		if (data) {
+	                            			// Session successfully created
+	                            			onSuccess(data);
+	                            		} else {
+	                            			onError("No such session with id " + lastID);		
+	                            		}	                           
+	                            	}	
+								);
 							}
 			    		}
 			    	);					

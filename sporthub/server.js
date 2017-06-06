@@ -35,15 +35,19 @@ function getPayloadIntValue(payload, index) {
     return payload[index] << 8 | payload[index+1]
 }
 
+function getPayloadLongValue(payload, index) {
+    return payload[index++] << 24 | payload[index++] << 16 | payload[index++] << 8 | payload[index]
+}
+
 function getWaterrowerDataObj(payload) {
     let data = {};
     data.sessionid = getPayloadIntValue(payload,0); 
     data.ticks     = getPayloadIntValue(payload,2); 
     data.seconds   = getPayloadIntValue(payload,4);
-    data.speed     = getPayloadIntValue(payload,6);
-    data.distance  = getPayloadIntValue(payload,8);
-    data.max_speed = getPayloadIntValue(payload,10);
-    data.avg_speed = getPayloadIntValue(payload,12);
+    data.speed     = getPayloadIntValue(payload,6) / 100;
+    data.distance  = getPayloadLongValue(payload,8) / 100;
+    data.max_speed = getPayloadIntValue(payload,12) / 100;
+    data.avg_speed = getPayloadIntValue(payload,14) / 100;
     return data;        
 }
 
@@ -57,10 +61,11 @@ function byteToHexString(b) {
 }
 
 mqtt_client.on('message', function (topic, message) {
-    // message is Buffer 
-    console.log('Got message. Topic: ' + topic.toString());
+    console.log('Received message ' + topic);
     if (topic === 'sportshub/data') {
-        backend.insertSessionEntry(getWaterrowerDataObj(message));
+        let data = getWaterrowerDataObj(message);
+        backend.insertSessionEntry(data);
+        io.emit('message', data)
     } else {
         if (topic === 'sportshub/device/connect') {
             console.log("Device registered. Now converting mac address from payload.");
@@ -74,30 +79,27 @@ mqtt_client.on('message', function (topic, message) {
             clientString     += byteToHexString(message[4]) + ':';  
             clientString     += byteToHexString(message[5])
             **/  
-            console.log(message.toString()); 
+            //console.log(message.toString()); 
         }
     }
 })
 
 // wenn der Pfad / aufgerufen wird
-app.get('/', function (req, res) {
-    let users = backend.getUsers(
-        function(err) {
-            res.status(500).send({'err':err})
-        },
-        function(users) {
-            res.render('index', { 'users': users});
-        }
-    )
+app.get('/main.html', function (req, res) {
+    res.render('index', {});
 });
 
-app.get('/users.html', function (req, res) {
+app.get('/livedata.html', function (req, res) {
+    res.render('live', {});
+});
+
+app.get('/user.html', function (req, res) {
     let users = backend.getUsers(
         function(err) {
             res.status(500).send({'err':err})
         },
         function(users) {
-            res.render('index', { 'users': users});
+            res.render('user', { 'users': users});
         }
     )
 });
@@ -119,6 +121,7 @@ app.get('/devices.html', function (req, res) {
             res.status(500).send({'err':err})
         },
         function(devices) {
+            io.emit('message', 'Tadaa')
             res.render('device', { 'devices': devices});
         }
     )
@@ -150,16 +153,17 @@ require('./rest/device.js')(app);
 // Websocket
 io.sockets.on('connection', function (socket) {
 	// der Client ist verbunden
-	console.log('Connected');
+	//console.log('Connected');
 	socket.emit('chat', { zeit: new Date(), text: 'Du bist nun mit dem Server verbunden!' });
 	// wenn ein Benutzer einen Text senden
 	socket.on('chat', function (data) {
 		// so wird dieser Text an alle anderen Benutzer gesendet
-        console.log('Message: ' + data.text);
+        //console.log('Message: ' + data.text);
 		io.sockets.emit('chat', { zeit: new Date(), name: data.name || 'Anonym', text: data.text });
 	});
 });
 
+backend.stopActiveSessions();
 // webserver
 // auf den Port x schalten
 server.listen(conf.port);

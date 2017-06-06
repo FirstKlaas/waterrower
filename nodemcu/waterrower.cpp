@@ -1,7 +1,8 @@
 #include "waterrower.h"
 /**
 */
-//#define DEBUG
+
+#define DEBUG
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -22,29 +23,31 @@ CommandPtr head = NULL;
    This ensures that any read to this variables will be done in memory and not on behalf of a
    cached value.
 */
-volatile unsigned long tick     = 0;         // Counts the signals coming from the waterrower
-volatile unsigned long lasttick = 0;         // Saves the last tick
+volatile unsigned long tick      = 0;         // Counts the signals coming from the waterrower
+volatile unsigned long lasttick         = 0;         // Saves the last tick
 volatile unsigned long meter_per_second = 0.0;       // As the name says. Value for meter per second
-volatile unsigned long seconds  = 0;         // Seconds the workout is running
-volatile float distance         = 0.0;       // Distance in meters for this workout
+volatile unsigned long seconds          = 0;         // Seconds the workout is running
+volatile float distance                 = 0.0;       // Distance in meters for this workout
 
 unsigned long last_seconds = 0;              // Which 'seconds' value was send the last time
 
-volatile unsigned long avg_speed_sum = 0;
-volatile unsigned long max_speed     = 0;
+volatile unsigned long avg_speed_sum    = 0;
+volatile unsigned long max_speed        = 0;
 
 /**
    4.805 ticks (interrupts) is equal to one meter distance.
 */
 const float ratio = 4.805;
 
-volatile long lastDebounceTime = 0;           // the last time the output pin was toggled in millis
-const unsigned long debounceDelay = 20;       // Duration in millis to ignore interrupts
+volatile long lastDebounceTime     =  0;      // the last time the output pin was toggled in millis
+const unsigned long debounceDelay  = 20;      // Duration in millis to ignore interrupts
 // slower than STOP_SPEED before a new session can start.
 volatile boolean measuring_running = false;
 
 byte mac[6];                                  // Buffer for storing the MAC Address.
-uint8_t data[14];                             // Waterrower Data Array
+uint8_t data[16];                             // Waterrower Data Array
+                                              // Byte 0-1: Session ID
+                                              // Byte 2-5: Distance
 char clientid[18];
 
 uint8_t sessionid_low  = 0;                      // Session ID we got from the server (Low Byte)
@@ -192,14 +195,14 @@ void startISR() {
 #ifdef DEBUG
   Serial.println("Attaching Rower ISR");
 #endif
-  //attachInterrupt(digitalPinToInterrupt(ROWER_PIN), tick_ISR, FALLING);
+  attachInterrupt(digitalPinToInterrupt(ROWER_PIN), tick_ISR, FALLING);
 }
 
 void stopISR() {
 #ifdef DEBUG
   Serial.println("Detaching Rower ISR");
 #endif
-  //detachInterrupt(digitalPinToInterrupt(ROWER_PIN));
+  detachInterrupt(digitalPinToInterrupt(ROWER_PIN));
 }
 
 /**
@@ -298,7 +301,7 @@ void setupMqtt(const char* server) {
 void logToSportshub(LEVEL lvl, const char* message) {
   if (client.connected()) {
     switch (lvl) {
-      case DEBUG:
+      case DEBUG_LEVEL:
         client.publish("sportshub/log/debug", message);
         break;
       default:
@@ -317,7 +320,8 @@ void sendWaterrowerData(void) {
   unsigned long m_seconds  = getSeconds();
   unsigned long m_tick     = getTicks();
   unsigned long m_avg_speed_sum = avg_speed_sum;
-
+  uint8_t index = 0;
+   
   float m_meter_per_second = getMeterPerSecond();
 
   if (!client.connected()) {
@@ -331,7 +335,7 @@ void sendWaterrowerData(void) {
   if (client.loop()) {
     if (is_measuring()) { //
 #ifdef DEBUG
-      Serial.print(".");
+      //Serial.print(".");
 #endif
       if (m_seconds > getLastSeconds()) { //
 
@@ -342,21 +346,23 @@ void sendWaterrowerData(void) {
         unsigned long m_speed    = (unsigned long) (m_meter_per_second);
         unsigned long m_distance = getDistance(m_tick);
         unsigned long m_avg_speed = (unsigned long) (m_avg_speed_sum / m_seconds);
-
-        data[0]  = getSessionHigh();
-        data[1]  = getSessionLow();
-        data[2]  = highByte(m_tick);
-        data[3]  = lowByte(m_tick);
-        data[4]  = highByte(m_seconds);
-        data[5]  = lowByte(m_seconds);
-        data[6]  = highByte(m_speed);
-        data[7]  = lowByte(m_speed);
-        data[8]  = highByte(m_distance);
-        data[9]  = lowByte(m_distance);
-        data[10] = highByte(max_speed);
-        data[11] = lowByte(max_speed);
-        data[12] = highByte(m_avg_speed);
-        data[13] = lowByte(m_avg_speed);
+        
+        data[index++]  = getSessionHigh();
+        data[index++]  = getSessionLow();
+        data[index++]  = highByte(m_tick);
+        data[index++]  = lowByte(m_tick);
+        data[index++]  = highByte(m_seconds);
+        data[index++]  = lowByte(m_seconds);
+        data[index++]  = highByte(m_speed);
+        data[index++]  = lowByte(m_speed);
+        data[index++]  = (m_distance >> 24) & 0xff;
+        data[index++]  = (m_distance >> 16) & 0xff;
+        data[index++]  = (m_distance >> 8) & 0xff;
+        data[index++]  = (m_distance) & 0xff;
+        data[index++]  = highByte(max_speed);
+        data[index++]  = lowByte(max_speed);
+        data[index++]  = highByte(m_avg_speed);
+        data[index++]  = lowByte(m_avg_speed);
 
 #ifdef DEBUG
         sprintf(message, "%u;%u;%u;%u", m_tick, m_seconds, m_speed, m_distance);
@@ -367,12 +373,12 @@ void sendWaterrowerData(void) {
         markTime(m_seconds);
       } else {
 #ifdef DEBUG
-        Serial.println("Too early to update");
+        //Serial.println("Too early to update");
 #endif
       }
     } else {
 #ifdef DEBUG
-      Serial.println("Not measuring.");
+      //Serial.println("Not measuring.");
 #endif
     }
   } else {

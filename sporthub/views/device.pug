@@ -1,21 +1,7 @@
-html
-  head
-    title Device
-    include include/head.pug
-  body
-    include include/menu.pug
-    div.row.headline 
-      .fixed40 id
-      .fixed180 MAC Address
-      .fixed120 Human Name
-      .fixed60 Active    
-    each device in devices
-      .row
-        .fixed40 [#{device.id}]
-        .fixed180 #{device.mac}
-        .fixed120 #{device.human}
-        if (device.active == 1)
-          .fixed60 yes
-        else
-          .fixed60 no  
+include include/menu.pug  
+each device in devices
+  .row(onclick='selectDevice(' + device.id + ')')
+    .item
+      div #{device.human}
+      div.small #{device.mac}
 

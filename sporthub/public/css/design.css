@@ -1,31 +1,40 @@
 HTML {
 	margin: 0px;
 	padding: 0px;
-	height: 100%;
 }
 
 BODY {
 	background-color: #3C4941;
 	font-family: 'Dosis', sans-serif;
 	color: white;
-	font-size: 14pt;
+	font-size: 30pt;
 	margin: 0px;
 	padding: 0px;
-	height: 100%;
 	display: flex;
 	flex-direction: column;
+	flex: 0 0 100%;
 	flex-wrap: nowrap;
+	border: 5px solid yellow;
+	overflow: hidden;
 }
 
 .menu {
 	display: flex;
 	flex-direction: row;
 	flex-wrap: nowrap;
-	width: 100%;	
+	flex: 0 0 100%;
 	font-weight: 600;
 	background-color: white;
-	margin-bottom: 10px; 
-	cursor: pointer;
+	font-size: 2.8em;
+}
+
+.submenu {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	font-weight: 600;
+	background-color: #ffc20c;
+	font-size: 0.7em;
 }
 
 .menu-item {
@@ -33,6 +42,8 @@ BODY {
 	flex: 0 0 auto;
 	padding: 1px 10px;
 	color: #3C4941;
+	cursor: pointer;
+	white-space: nowrap;
 }
 
 .menu-item:HOVER {
@@ -50,6 +61,13 @@ BODY {
 	flex-wrap: nowrap;
 	width: 100%;
 	padding: 0px 20px;
+	font-size: 2em;
+}
+
+.row:HOVER {
+	color: black;
+	background-color: white;
+	cursor: pointer;
 }
 
 .headline {
@@ -70,6 +88,10 @@ BODY {
 	flex: 0 0 60px;
 }
 
+.fixed80 {
+	flex: 0 0 80px;
+}
+
 .fixed120 {
 	flex: 0 0 120px;
 }
@@ -82,16 +104,30 @@ BODY {
 	flex: 1 1 auto;
 }
 
+.button {
+	cursor: pointer;
+}
+
 .right {
 	align-self: flex-end;
 }
-.row A {
-	text-decoration: none;
-	color: white;
+
+.small {
+	font-size: 0.5em;
 }
 
-.row A:HOVER {
-	text-decoration: underline;
-	color: white;
+.livecontainer {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   flex-flow: column nowrap;
+   align-content: center;
+}
+
+.livetile {
+	display: flex;
+	flex: 1 1 auto;
+	font-size: 2em;
+	padding: 30px 10px;
 }
 

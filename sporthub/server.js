@@ -18,12 +18,6 @@ const waterrower = require('./waterrower.js')(conf.mqttserver);
 
 app.set('backend',backend);
 app.set('waterrower',waterrower);
-/**
-mqtt_client.on('connect', function () {
-    waterrower.onConnect();
-    console.log("connected to mqtt server @ " + conf.mqttserver);
-});
-**/
 
 waterrower.on('data', function (sender, data) {
     backend.insertSessionEntry(data);
@@ -41,8 +35,6 @@ waterrower.on('session-start', function(sender) {
 waterrower.on('session-stop', function(sender, sessionid) {
     io.emit('session-stop', sessionid);
 });
-
-
 
 // Setting up routes
 const rest_user_router    = require('./rest/user.js')(app);

@@ -104,27 +104,8 @@ app.get('/device/:id', function (req, res) {
     )
 })
 
-app.get('/hof/maxspeed.html',function (req, res) {
-    let device = backend.getHallOfFameMaxSpeed(
-        function(err) {
-            res.status(500).send({'err':err})
-        },
-        function(entries) {
-            res.render('hof_maxspeed', { 'hof': entries});
-        }
-    )
-})
-
-app.get('/hof/distance.html',function (req, res) {
-    let device = backend.getHallOfFameDistance(
-        function(err) {
-            res.status(500).send({'err':err})
-        },
-        function(entries) {
-            res.render('hof_distance', { 'hof': entries});
-        }
-    )
-})
+const halloffame_router = require('./routes/hall-of-fame.js')(app);
+app.use('/hof', halloffame_router);
 
 // Websocket
 io.sockets.on('connection', function (socket) {

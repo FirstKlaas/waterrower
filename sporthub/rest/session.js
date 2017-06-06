@@ -1,9 +1,12 @@
+const express = require('express')
+
 var exports = module.exports = (app) => {
 
 	let backend    = app.get('backend')
 	let waterrower = app.get('waterrower')
+	const router = express.Router() 
 
-	app.get('/rest/session', function (req, res) {
+	router.get('/', function (req, res) {
 	    backend.getSessions(
 	        function (err) {
 	            res.status(500).json({"err":err});
@@ -15,7 +18,7 @@ var exports = module.exports = (app) => {
 	});
 
 
-	app.get('/rest/session/active', function (req, res) {
+	router.get('/active', function (req, res) {
 	    backend.getActiveSessions(
 	        function (err) {
 	            res.status(500).json({"err":err});
@@ -45,7 +48,7 @@ var exports = module.exports = (app) => {
 	*   - Check if the user exists
 	*   - Check if the device exists
 	**/
-	app.get('/rest/session/start/:userid/:deviceid', function(req, res) {
+	router.get('/start/:userid/:deviceid', function(req, res) {
 	    let device = null;
 
 	    backend.getDevice(req.params.deviceid, 
@@ -93,7 +96,7 @@ var exports = module.exports = (app) => {
 	*   - Updating the session values
 	*   
 	**/
-	app.get('/rest/session/stop/:sessionid', function(req, res) {
+	router.get('/stop/:sessionid', function(req, res) {
 	    backend.stopSession(req.params.sessionid, 
 	        function(err) {
 	            res.status(500).json({"err" : err});
@@ -112,22 +115,23 @@ var exports = module.exports = (app) => {
 	    );
 	});
 
-	app.get('/rest/session/:sessionid', function (req, res) {
+	router.get('/:sessionid', function (req, res) {
 	    backend.getSession(req.params.sessionid, function(data) {
 	        res.json(data);
 	    })
 	});
 
-	app.get('/rest/session/:sessionid/entry', function (req, res) {
+	router.get('/:sessionid/entry', function (req, res) {
 	    backend.getSessionEntries(req.params.sessionid, function(data) {
 	        res.json(data);
 	    })
 	});
 
-	app.get('/rest/session/:sessionid/entry/:minsec/:maxsec', function (req, res) {
+	router.get('/:sessionid/entry/:minsec/:maxsec', function (req, res) {
 	    db.all("SELECT * FROM session_entry WHERE session_id=? AND seconds <= ? AND seconds >= ? ORDER BY seconds ASC",[req.params.sessionid, req.params.minsec, req.params.maxsec], function (err, rows) {
 	        res.json({ "session_entry" : rows });
 	    });
 	});
 
+	return router;
 }

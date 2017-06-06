@@ -1,9 +1,11 @@
 const conf = require('../config.json');
+const express = require('express')
 
 var exports = module.exports = (app) => {
 	let backend = app.get('backend');
+	const router = express.Router() 
 
-	app.get('/rest/user', function (req, res) {
+	router.get('/', function (req, res) {
 	    backend.getUsers(
 	        function(err)  {
 	            res.status(500).json({"err":err});            
@@ -15,7 +17,7 @@ var exports = module.exports = (app) => {
 	});
 
 
-	app.get('/rest/user/:userid', function (req, res) {
+	router.get('/:userid', function (req, res) {
 	    backend.getUser(req.params.userid,
 	        function(err) {
 	            res.status(500).json({"err":err});            
@@ -30,11 +32,12 @@ var exports = module.exports = (app) => {
 	    )
 	});
 
-	app.get('/rest/user/:userid/session', function (req, res) {
+	router.get('/:userid/session', function (req, res) {
 	    backend.getUserSessions(req.params.userid, function(data) {
 	        res.json(data);    
 	    })
 	});
 
 
+	return router;
 }	

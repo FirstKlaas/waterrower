@@ -4,7 +4,6 @@ const server = require('http').createServer(app);
 const io = require('socket.io').listen(server);
 const conf = require('./config.json');
 const sqlite3 = require('sqlite3').verbose();
-const mqtt = require('mqtt');
 
 
 var db = new sqlite3.Database(conf.database);
@@ -15,74 +14,40 @@ var backend = require('./database.js')(db);
 app.use(express.static(conf.static_dir));
 app.set('view engine', 'pug');
 
-/* 
-* MQTT Einrichten
-*/
-var mqtt_client  = mqtt.connect('mqtt://' + conf.mqttserver);
-
-const waterrower = require('./waterrower.js')(mqtt_client);
+const waterrower = require('./waterrower.js')(conf.mqttserver);
 
 app.set('backend',backend);
 app.set('waterrower',waterrower);
-
+/**
 mqtt_client.on('connect', function () {
     waterrower.onConnect();
     console.log("connected to mqtt server @ " + conf.mqttserver);
 });
+**/
 
+waterrower.on('data', function (sender, data) {
+    backend.insertSessionEntry(data);
+    io.emit('message', data);
+});
 
-function getPayloadIntValue(payload, index) {
-    return payload[index] << 8 | payload[index+1]
-}
+waterrower.on('device-connected', function(sender, payload) {
+    console.log("Device registered.");
+});
 
-function getPayloadLongValue(payload, index) {
-    return payload[index++] << 24 | payload[index++] << 16 | payload[index++] << 8 | payload[index]
-}
+// Setting up routes
+const rest_user_router    = require('./rest/user.js')(app);
+const rest_session_router = require('./rest/session.js')(app);
+const rest_device_router  = require('./rest/device.js')(app);
 
-function getWaterrowerDataObj(payload) {
-    let data = {};
-    data.sessionid = getPayloadIntValue(payload,0); 
-    data.ticks     = getPayloadIntValue(payload,2); 
-    data.seconds   = getPayloadIntValue(payload,4);
-    data.speed     = getPayloadIntValue(payload,6) / 100;
-    data.distance  = getPayloadLongValue(payload,8) / 100;
-    data.max_speed = getPayloadIntValue(payload,12) / 100;
-    data.avg_speed = getPayloadIntValue(payload,14) / 100;
-    return data;        
-}
+app.get('/rest', function(req, res, next) {
+    res.setHeader("Content-Type", conf.json_content_type);
+    next('route');
+});
 
-const hex = '0123456789ABFDEF';
+app.use('/rest/user', rest_user_router);
+app.use('/rest/session', rest_session_router);
+app.use('/rest/device', rest_device_router);
 
-function byteToHexString(b) {
-    let result = '';
-    result += hex[(b >> 4) & 0x0F];
-    result += hex[b & 0x0F];
-    return result;   
-}
-
-mqtt_client.on('message', function (topic, message) {
-    //console.log('Received message ' + topic);
-    if (topic === 'sportshub/data') {
-        let data = getWaterrowerDataObj(message);
-        backend.insertSessionEntry(data);
-        io.emit('message', data)
-    } else {
-        if (topic === 'sportshub/device/connect') {
-            console.log("Device registered. Now converting mac address from payload.");
-            //TODO: Converting mac adress
-            /**
-            console.log('B0 = ' + message[0]); 
-            let clientString =  byteToHexString(message[0]) + ':';
-            clientString     += byteToHexString(message[1]) + ':';  
-            clientString     += byteToHexString(message[2]) + ':';  
-            clientString     += byteToHexString(message[3]) + ':';  
-            clientString     += byteToHexString(message[4]) + ':';  
-            clientString     += byteToHexString(message[5])
-            **/  
-            //console.log(message.toString()); 
-        }
-    }
-})
 
 // wenn der Pfad / aufgerufen wird
 app.get('/main.html', function (req, res) {
@@ -160,17 +125,6 @@ app.get('/hof/distance.html',function (req, res) {
         }
     )
 })
-
-app.get('/rest', function(req, res, next) {
-    res.setHeader("Content-Type", conf.json_content_type);
-    next('route');
-});
-
-
-require('./rest/user.js')(app);
-require('./rest/session.js')(app);
-require('./rest/device.js')(app);
-
 
 // Websocket
 io.sockets.on('connection', function (socket) {

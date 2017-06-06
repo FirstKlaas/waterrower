@@ -1,9 +1,11 @@
 const conf = require('../config.json');
+const express = require('express')
 
 var exports = module.exports = (app) => {
 	let backend = app.get('backend');
+	const router = express.Router() 
 
-	app.get('/rest/device/active/:id', function(req, res) {
+	router.get('/active/:id', function(req, res) {
 	    backend.isDeviceActive(req.params.id,
 	        function(err) {
 	            res.status(500).json({"err":err});
@@ -24,7 +26,7 @@ var exports = module.exports = (app) => {
 	});
 
 
-	app.get('/rest/device/:id', function(req, res) {
+	router.get('/:id', function(req, res) {
 	    backend.getDevice(
 	        req.params.id,
 	        function(err) {
@@ -41,7 +43,7 @@ var exports = module.exports = (app) => {
 	});
 
 
-	app.get('/rest/device/', function(req, res) {
+	router.get('/', function(req, res) {
 	    backend.getDevices(
 	        function(err) {
 	            res.status(500).json({"err": err});
@@ -52,4 +54,5 @@ var exports = module.exports = (app) => {
 	    ); 
 	});
 
+	return router; 
 }

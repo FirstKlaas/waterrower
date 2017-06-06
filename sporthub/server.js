@@ -61,7 +61,7 @@ function byteToHexString(b) {
 }
 
 mqtt_client.on('message', function (topic, message) {
-    console.log('Received message ' + topic);
+    //console.log('Received message ' + topic);
     if (topic === 'sportshub/data') {
         let data = getWaterrowerDataObj(message);
         backend.insertSessionEntry(data);
@@ -135,6 +135,28 @@ app.get('/device/:id', function (req, res) {
         },
         function(device) {
             res.render('device', { 'devices': [device]});
+        }
+    )
+})
+
+app.get('/hof/maxspeed.html',function (req, res) {
+    let device = backend.getHallOfFameMaxSpeed(
+        function(err) {
+            res.status(500).send({'err':err})
+        },
+        function(entries) {
+            res.render('hof_maxspeed', { 'hof': entries});
+        }
+    )
+})
+
+app.get('/hof/distance.html',function (req, res) {
+    let device = backend.getHallOfFameDistance(
+        function(err) {
+            res.status(500).send({'err':err})
+        },
+        function(entries) {
+            res.render('hof_distance', { 'hof': entries});
         }
     )
 })

@@ -1,0 +1,9 @@
+html
+  head
+    title Waterrower
+    include include/head.pug
+  body
+    each entry in hof
+      row
+        .fixed80 #{entry.firstname} #{entry.lastname}
+        .fixed80 #{entry.distance} m

@@ -1,4 +1,3 @@
-include include/menu.pug  
 div.row.headline 
   div.fixed40 id 
   div.fixed120 Distance 
@@ -12,18 +11,22 @@ div.row.headline
 
 each session in sessions
   div.row 
-    div.fixed40 [#{session.id}] 
-    div.fixed120.right #{session.distance} m 
-    div.fixed120.right #{session.max_speed} m/s 
-    div.fixed120.right #{session.avg_speed} m/s 
-    div.fixed180 #{session.start} 
-    div.fixed180 #{session.end} 
-    div.fixed60
-      a(href='/user/' + session.user_id) #{session.user_id} 
-    div.fixed60
-      a(href='/device/' + session.device_id) #{session.device_id}
-    if (session.active != 0)  
-      div.item(onclick='stopSession(' + session.id + ')') Active
-    else
-      div.item &nbsp;
+    div
+      .fixed40 [#{session.id}] 
+      .item.right #{session.distance} m
+    div   
+      div.fixed120.right #{session.max_speed} m/s 
+      div.item.right #{session.avg_speed} m/s
+    div 
+      div.fixed180 #{session.start} 
+      div.item #{session.end}
+    div 
+      div.fixed60
+        a(href='/user/' + session.user_id) #{session.user_id} 
+      div.fixed60
+        a(href='/device/' + session.device_id) #{session.device_id}
+      if (session.active != 0)  
+        div.item(onclick='stopSession(' + session.id + ')') Active
+      else
+        div.item &nbsp;
   

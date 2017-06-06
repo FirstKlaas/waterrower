@@ -14,7 +14,6 @@ BODY {
 	flex-direction: column;
 	flex: 0 0 100%;
 	flex-wrap: nowrap;
-	border: 5px solid yellow;
 	overflow: hidden;
 }
 

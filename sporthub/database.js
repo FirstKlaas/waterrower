@@ -69,6 +69,31 @@ class Backend {
     	});
 	}
 
+
+	getHallOfFameDistance(onError, onSuccess) {
+		this.db.all('select sum(distance) as distance, user_id, session.id as session_id, user.firstname, user.lastname from session, user where session.user_id = user.id group by user_id order by distance desc',
+			function(err, rows) {
+				if (err) {
+	            	onError(err);
+	        	} else {
+	        		onSuccess(rows);
+	            }
+			}
+		)
+	}
+
+	getHallOfFameMaxSpeed(onError, onSuccess) {
+		this.db.all('select max(max_speed) as max_speed, user_id, session.id as session_id, user.firstname, user.lastname from session, user where session.user_id = user.id group by user_id order by max_speed desc',
+			function(err, rows) {
+				if (err) {
+	            	onError(err);
+	        	} else {
+	        		onSuccess(rows);
+	            }
+			}
+		)
+	}
+
 	stopSession(id, onError, onSuccess) {
 		let self = this;
 		// First test, if there is a session at all.

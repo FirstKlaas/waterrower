@@ -17,7 +17,7 @@ function stopSession() {
 		console.log("No session to stop");
 		return;
 	}
-	console.log("Stopping session " + session.id);
+	//console.log("Stopping session " + session.id);
 	$.getJSON( "/rest/session/stop/" + session.id, function( data ) {
 		session = null;
 		setupActions();

@@ -76,14 +76,13 @@ class Waterrower extends EventEmitter {
 		return this.sessionid;
 	}
 
-	stopSession(mac, sessionid) {
-		
+	stopSession(mac, sessionid) {		
         const payload = Buffer.allocUnsafe(3);
         payload[0] = STOP_SESSION_CMD;  // CMD Stop Session
         payload[1] = (sessionid >> 8) & 0xFF;
         payload[2] = sessionid & 0xFF;
         this.mqtt.publish(mac, payload);
         this.sessionid = null;
-        this.emit('session-stop', this);
+        this.emit('session-stop', this, sessionid);
 	}
 }

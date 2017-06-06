@@ -34,6 +34,16 @@ waterrower.on('device-connected', function(sender, payload) {
     console.log("Device registered.");
 });
 
+waterrower.on('session-start', function(sender) {
+    io.emit('session-start', sender.getSessionId());
+});
+
+waterrower.on('session-stop', function(sender, sessionid) {
+    io.emit('session-stop', sessionid);
+});
+
+
+
 // Setting up routes
 const rest_user_router    = require('./rest/user.js')(app);
 const rest_session_router = require('./rest/session.js')(app);

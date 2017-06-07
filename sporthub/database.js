@@ -148,6 +148,20 @@ class Backend {
 		);
 	}
 
+
+	stopSessionPromise(id) {
+		return new Promise((resolve,reject) => {
+			stopSession(id,
+				(error) => {
+					reject(error);
+				},
+				() => {
+					resolve();
+				}
+			);
+		});
+	}
+
 	startSession(userid, deviceid, onError, onSuccess) {
 		let database = this.db;
 		let self = this;

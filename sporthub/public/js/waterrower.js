@@ -17,7 +17,7 @@ function stopSession() {
 		console.log("No session to stop");
 		return;
 	}
-	//console.log("Stopping session " + session.id);
+	console.log("Stopping session " + session.id);
 	$.getJSON( "/rest/session/stop/" + session.id, function( data ) {
 		session = null;
 		setupActions();
@@ -71,6 +71,27 @@ function showUser() {
 	$('#content').load('/user.html',
 		function() {
 			setupActions();
+		}
+	);
+}
+
+function showHallOfFame() {
+	$('#content').load('/hof',
+		function() {
+		}
+	);
+}
+
+function showHofMaxSpeed() {
+	$('#content').load('/hof/maxspeed.html',
+		function() {
+		}
+	);
+}
+
+function showHofDistance() {
+	$('#content').load('/hof/distance.html',
+		function() {
 		}
 	);
 }
@@ -157,6 +178,7 @@ function selectDevice(id) {
 
 function onInit() {
 	// Testen, ob eine Session gerade laeuft.
+	
 	checkForActiveSession(
 		function() {
 			// We have an active Session
@@ -171,6 +193,7 @@ function onInit() {
 			);
 		},
 		function() {
+			
 			// We don't have an existing session
 			if (!user) {
 				showUser();
@@ -179,13 +202,15 @@ function onInit() {
 			} else {
 				setupActions();
 			}
+
 		}
 	);
+	
 }
 
 socket.on('message', 
 	function(data) { 
-		console.log(data)
+		//console.log(data)
 		currentSession = data.sessionid;
 		$('#dd').text(formatDistance(data.distance));
 		$('#speed').text(numeral(data.speed).format('0,0.00') + ' m/s');
@@ -194,5 +219,18 @@ socket.on('message',
 		$('#ds').text(numeral(data.seconds).format('00:00:00'));
 		$('#ticks').text(data.ticks);
 	});
+
+socket.on('session-start',
+	function(data) {
+		console.log('io=> session-start');
+	}
+);
+
+socket.on('session-stop',
+	function(data) {
+		console.log('io=> session-stop');
+	}
+);
+
 
 

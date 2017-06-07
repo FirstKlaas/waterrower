@@ -94,7 +94,7 @@ class Backend {
 		)
 	}
 
-	stopSession(id, onError, onSuccess) {
+	_stopSession(id, onError, onSuccess) {
 		let self = this;
 		// First test, if there is a session at all.
 		this.getSession(id,
@@ -132,23 +132,8 @@ class Backend {
 		);
 	}
 
+
 	stopActiveSessions() {
-		let self = this;
-		this.getActiveSessions(
-			function(err) {
-
-			},
-			function(sessions) {
-				if (sessions != null) {
-					sessions.forEach(function(session) {
-						self.stopSession(session.id, function(err){},function(device){});
-					})					
-				}
-			}
-		);
-	}
-
-	stopActiveSessionsPromise() {
 		let self = this;
 		return new Promise((resolve,reject) => {
 		    this.db.all("SELECT * FROM session WHERE session.active=1", function (err, rows) {
@@ -157,7 +142,7 @@ class Backend {
 	        	} else {
 	        		let promises = [];
 	        		rows.forEach((session) => {
-	        			promises.push(self.stopActiveSessionPromise());
+	        			promises.push(self.stopSession(session.id));
 	        		})
 	        		Promise.all(promises).then(values => {
 	        			resolve(values);
@@ -169,18 +154,15 @@ class Backend {
 		});
 	}
 
-	stopActiveSessionPromise() {
-		return new 
-	}
-
-	stopSessionPromise(id) {
+	stopSession(id) {
+		let self = this;
 		return new Promise((resolve,reject) => {
-			stopSession(id,
+			self._stopSession(id,
 				(error) => {
 					reject(error);
 				},
-				() => {
-					resolve();
+				(device) => {
+					resolve(device);
 				}
 			);
 		});

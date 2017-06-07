@@ -19,6 +19,8 @@ const waterrower = require('./waterrower.js')(conf.mqttserver);
 app.set('backend',backend);
 app.set('waterrower',waterrower);
 
+app.locals.numeral = require('numeral');
+
 waterrower.on('data', function (sender, data) {
     backend.insertSessionEntry(data);
     io.emit('message', data);
@@ -122,7 +124,7 @@ io.sockets.on('connection', function (socket) {
 	});
 });
 
-backend.stopActiveSessionsPromise().then(values => {
+backend.stopActiveSessions().then(values => {
     // webserver
     // auf den Port x schalten
     server.listen(conf.port);

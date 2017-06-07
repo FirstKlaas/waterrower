@@ -148,6 +148,30 @@ class Backend {
 		);
 	}
 
+	stopActiveSessionsPromise() {
+		let self = this;
+		return new Promise((resolve,reject) => {
+		    this.db.all("SELECT * FROM session WHERE session.active=1", function (err, rows) {
+				if (err) {
+	            	reject(err);
+	        	} else {
+	        		let promises = [];
+	        		rows.forEach((session) => {
+	        			promises.push(self.stopActiveSessionPromise());
+	        		})
+	        		Promise.all(promises).then(values => {
+	        			resolve(values);
+	        		}).catch(reason => { 
+  						reject(reason);
+					});
+	            }
+	    	});
+		});
+	}
+
+	stopActiveSessionPromise() {
+		return new 
+	}
 
 	stopSessionPromise(id) {
 		return new Promise((resolve,reject) => {

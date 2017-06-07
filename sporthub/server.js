@@ -122,10 +122,11 @@ io.sockets.on('connection', function (socket) {
 	});
 });
 
-backend.stopActiveSessions();
-// webserver
-// auf den Port x schalten
-server.listen(conf.port);
+backend.stopActiveSessionsPromise().then(values => {
+    // webserver
+    // auf den Port x schalten
+    server.listen(conf.port);
 
-// Portnummer in die Konsole schreiben
-console.log('Der Server läuft nun unter http://127.0.0.1:' + conf.port + '/');
+    // Portnummer in die Konsole schreiben
+    console.log('Der Server läuft nun unter http://127.0.0.1:' + conf.port + '/');    
+});

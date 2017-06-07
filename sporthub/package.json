@@ -8,6 +8,10 @@
   },
   "author": "Klaas Nebuhr",
   "license": "ISC",
+  "repository" : { 
+    "type" : "git",
+    "url" : "https://github.com/FirstKlaas/waterrower.git"
+  },
   "dependencies": {
     "events": "^1.1.1",
     "express": "^4.14.0",

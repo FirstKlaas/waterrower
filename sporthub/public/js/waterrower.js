@@ -20,7 +20,7 @@ function stopSession() {
 	console.log("Stopping session " + session.id);
 	$.getJSON( "/rest/session/stop/" + session.id, function( data ) {
 		session = null;
-		setupActions();
+		//setupActions();
 	});
 }
 
@@ -48,7 +48,7 @@ function startSession() {
 		console.log(session);
 		console.log(user);
 		console.log(device);
-	    setupActions();
+	    //setupActions();
 	});
 }
 
@@ -128,20 +128,18 @@ function setupActions() {
 		});
 	}
 }
-function checkForActiveSession(onYes, onNo) {
-	if (session) {
-		onYes();
-	} else {
+
+function checkForActiveSession() {
+	return new Promise((resolve, reject) => {
 		$.getJSON( "/rest/session/active", function( data ) {
+			console.log(data);
 			if (data && data.sessions) {
-				session = data.sessions[0];
-				onYes();
+				resolve(data.sessions[0]);
 			} else {
-				session = null;
-				onNo();
+				resolve(null);
 			}
 		});
-	}
+	});
 }
 
 function selectUser(id) {
@@ -179,9 +177,9 @@ function selectDevice(id) {
 function onInit() {
 	// Testen, ob eine Session gerade laeuft.
 	
-	checkForActiveSession(
-		function() {
-			// We have an active Session
+	checkForActiveSession().then(server_session => {
+		if(server_session) {
+			session = server_session;
 			setUser(session.user_id,
 				function(rUser) {
 					setDevice(session.device_id,
@@ -191,9 +189,7 @@ function onInit() {
 					);
 				}
 			);
-		},
-		function() {
-			
+		} else {
 			// We don't have an existing session
 			if (!user) {
 				showUser();
@@ -202,10 +198,8 @@ function onInit() {
 			} else {
 				setupActions();
 			}
-
 		}
-	);
-	
+	})
 }
 
 socket.on('message', 
@@ -222,13 +216,16 @@ socket.on('message',
 
 socket.on('session-start',
 	function(data) {
-		console.log('io=> session-start');
+		console.log('io=> session-start' + data);
+		onInit();
 	}
 );
 
 socket.on('session-stop',
 	function(data) {
-		console.log('io=> session-stop');
+		session = null;
+		console.log('io=> session-stop ' + data);
+		onInit();
 	}
 );
 

@@ -66,7 +66,7 @@ var exports = module.exports = (app) => {
 	                    function(session) {
 	                        res.json({"session" : session});
 	                        waterrower.startSession(device.mac,session.id);
-	                        console.log('Sending start command to mqtt session id = ' + session.id)
+	                        //console.log('Sending start command to mqtt session id = ' + session.id)
 	                
 	                        waterrower.startSession()
 	                    }

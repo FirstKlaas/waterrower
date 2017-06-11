@@ -7,7 +7,7 @@ BODY {
 	background-color: #3C4941;
 	font-family: 'Nova Mono', 'Dosis', sans-serif;
 	color: white;
-	font-size: 25pt;
+	font-size: 35pt;
 	margin: 0px;
 	padding: 0px;
 	display: flex;
@@ -33,16 +33,21 @@ BODY {
 	flex-wrap: nowrap;
 	font-weight: 600;
 	background-color: #ffc20c;
-	font-size: 1.5em;
+	font-size: 2.5em;
+	margin-bottom: 1em;
 }
 
 .menu-item {
 	display: flex;
 	flex: 0 0 auto;
+	flex-direction: row;
+	flex-wrap: nowrap;
+  	justify-content: center;
 	padding: 1px 10px;
 	color: #3C4941;
 	cursor: pointer;
 	white-space: nowrap;
+  	align-items: center;
 }
 
 .menu-item:HOVER {
@@ -53,7 +58,7 @@ BODY {
 	text-decoration: none;
 	color: #3C4941;
 }
-
+	
 .column {
 	display: flex;
 	flex-direction: column;
@@ -69,6 +74,7 @@ BODY {
 	width: 100%;
 	font-size: 2em;
 	justify-content: space-between;
+	padding: 20px 0px;
 }
 
 .row:HOVER {
@@ -110,6 +116,9 @@ BODY {
 .item {
 	flex: 1 1 auto;
 	margin: 0px auto;
+  	justify-content: center;
+	white-space: nowrap;
+  	align-items: center;
 }
 
 .item:last-child {
@@ -118,8 +127,12 @@ BODY {
 }
 
 .item:first-child {
-	padding-left: 20px;
+	padding-left: 60px;
 	text-align: left;
+}
+
+.item I {
+	padding-left: 30px;
 }
 
 .button {

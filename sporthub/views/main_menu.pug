@@ -1,0 +1,17 @@
+include include/menu.pug  
+div.row(onClick='showHallOfFame()')  
+  .item 
+    i(class="fa fa-trophy",aria-hidden="true")
+    span &nbsp;Bestenliste
+div.row(onClick='showUser()')  
+  .item
+    i(class="fa fa-user",aria-hidden="true") 
+    span &nbsp;Sportler
+div.row(onClick='showDevices()')  
+  .item
+    i(class="fa fa-rocket",aria-hidden="true")
+    span &nbsp;Gerät
+div.row(onClick='showLive()')
+  .item
+    i(class="fa fa-heart",aria-hidden="true")
+    span &nbsp;Live

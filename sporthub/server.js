@@ -58,6 +58,10 @@ app.get('/main.html', function (req, res) {
     res.render('index', {});
 });
 
+app.get('/menu.html', function (req, res) {
+    res.render('main_menu', {});
+});
+
 app.get('/livedata.html', function (req, res) {
     res.render('live', {});
 });

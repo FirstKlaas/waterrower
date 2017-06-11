@@ -52,6 +52,13 @@ function startSession() {
 	});
 }
 
+function showMainMenu() {
+	$('#content').load('/menu.html',
+		function() {
+		}
+	);
+}
+
 function showSessions() {
 	$('#content').load('/sessions.html',
 		function() {

@@ -118,16 +118,10 @@ var exports = module.exports = (app) => {
 	    })
 	});
 
-	router.get('/:sessionid/entry', function (req, res) {
-	    backend.getSessionEntries(req.params.sessionid, function(data) {
-	        res.json(data);
-	    })
-	});
-
-	router.get('/:sessionid/entry/:minsec/:maxsec', function (req, res) {
-	    db.all("SELECT * FROM session_entry WHERE session_id=? AND seconds <= ? AND seconds >= ? ORDER BY seconds ASC",[req.params.sessionid, req.params.minsec, req.params.maxsec], function (err, rows) {
-	        res.json({ "session_entry" : rows });
-	    });
+	router.get('/entry/:sessionid', function (req, res, next) {
+		backend.getSessionEntries(req.params.sessionid)
+	    .then(data => res.json(data))
+	    .catch(err => res.status(500).json({"err" : err}));
 	});
 
 	return router;

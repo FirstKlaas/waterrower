@@ -67,49 +67,27 @@ app.get('/livedata.html', function (req, res) {
 });
 
 app.get('/user.html', function (req, res) {
-    let users = backend.getUsers(
-        function(err) {
-            res.status(500).send({'err':err})
-        },
-        function(users) {
-            res.render('user', { 'users': users});
-        }
-    )
+    backend.getUsers()
+    .then(users => res.render('user', { 'users': users}))
+    .catch(err => res.status(500).send({'err':err}));
 });
 
 app.get('/sessions.html', function (req, res) {
-    let users = backend.getSessions(
-        function(err) {
-            res.status(500).send({'err':err})
-        },
-        function(sessions) {
-            res.render('sessions', { 'sessions': sessions});
-        }
-    )
+    backend.getSessions()
+    .then(sessions => res.render('sessions', { 'sessions': sessions}))
+    .catch(err => res.status(500).send({'err':err}));
 });
 
 app.get('/devices.html', function (req, res) {
-    let devices = backend.getDevices(
-        function(err) {
-            res.status(500).send({'err':err})
-        },
-        function(devices) {
-            io.emit('message', 'Tadaa')
-            res.render('device', { 'devices': devices});
-        }
-    )
+    backend.getDevices()
+    .then(devices => res.render('device', { 'devices': devices}))
+    .catch(err => res.status(500).send({'err':err}));
 })
 
 app.get('/device/:id', function (req, res) {
-    let device = backend.getDevice(
-        req.params.id,
-        function(err) {
-            res.status(500).send({'err':err})
-        },
-        function(device) {
-            res.render('device', { 'devices': [device]});
-        }
-    )
+    backend.getDevice()
+    .then(device => res.render('device', { 'devices': [device]}))
+    .catch(err => res.status(500).send({'err':err}));
 })
 
 const halloffame_router = require('./routes/hall-of-fame.js')(app);

@@ -7,129 +7,93 @@ class Backend {
 		this.db = db;
 	}
 
-	getUsers(onError, onSuccess) {
-		this.db.all("SELECT * FROM user", function(err, rows) {
-			if (err) {
-            	onError(err);
-        	} else {
-            	onSuccess(rows);
-            }
-        });
+	getUsers() {
+		return new Promise((resolve, reject) => {
+			this.db.all("SELECT * FROM user", function(err, rows) {
+				if (err) return reject(err);
+				resolve(rows);
+	        });
+		});
 	}
 
-	getUser(id, onError, onSuccess) {
-	    this.db.all("SELECT * FROM user WHERE id=?", [id],function (err, rows) {
-			if (err) {
-            	onError(err);
-        	} else {
-        		if (rows.length === 0) {
-        			onSuccess(null);	
-        		} else {
-            		onSuccess(rows[0]);
-            	}
-            }
-    	});
+	getUser(id) {
+		return new Promise((resolve,reject) => {
+		    this.db.get("SELECT * FROM user WHERE id=?", [id],function (err, row) {
+				if (err) return reject(err);
+	            resolve(row);
+	    	});
+		});
 	}
 
 	getSessions(onError, onSuccess) {
-	    this.db.all("SELECT * FROM session ORDER BY id DESC", function (err, rows) {
-			if (err) {
-            	onError(err);
-        	} else {
-            	onSuccess(rows);
-            }
+		return new Promise((resolve,reject) => {
+		    this.db.all("SELECT * FROM session ORDER BY id DESC", function (err, rows) {
+				if (err) return reject(err);
+				resolve(rows);
+		    });			
+		})
+	}
+
+	getSession(id) {
+	    return new Promise((resolve,reject) => {
+			this.db.get("SELECT * FROM session WHERE id=?", [id], (err, row) => {
+				if (err) return reject(err);
+				resolve(row);
+	    	});
 	    });
 	}
 
-	getSession(id, onError, onSuccess) {
-	    this.db.all("SELECT * FROM session WHERE id=?", [id], function (err, rows) {
-			if (err) {
-            	onError(err);
-        	} else {
-        		if (rows.length === 0) {
-        			onSuccess(null);	
-        		} else {
-        			onSuccess(rows[0]);
-        		}
-            }
-    	});
-	}
-
-	getActiveSessions(onError, onSuccess) {
-	    this.db.all("SELECT * FROM session WHERE session.active=1", function (err, rows) {
-			if (err) {
-            	onError(err);
-        	} else {
-        		if (rows.length === 0) {
-        			onSuccess(null);	
-        		} else {
-        			onSuccess(rows);
-        		}
-            }
-    	});
+	getActiveSessions() {
+		return new Promise((resolve,reject) => {
+		    this.db.all("SELECT * FROM session WHERE session.active=1", (err, rows) => {
+				if (err) return reject(err);
+	            resolve(rows);
+	    	});
+		});
 	}
 
 
-	getHallOfFameDistance(onError, onSuccess) {
-		this.db.all('select sum(distance) as distance, user_id, session.id as session_id, user.firstname, user.lastname from session, user where session.user_id = user.id group by user_id order by distance desc',
-			function(err, rows) {
-				if (err) {
-	            	onError(err);
-	        	} else {
-	        		onSuccess(rows);
-	            }
-			}
-		)
+	getHallOfFameDistance() {
+		return new Promise((resolve, reject) => {
+			this.db.all("select sum(distance) as distance, user_id, session.id as session_id, user.firstname, user.lastname from session, user where session.user_id = user.id group by user_id order by distance desc",
+				(err, rows) => {
+					if (err) return reject(err);
+					resolve(rows);
+				}
+			)
+		});
 	}
 
 	getHallOfFameMaxSpeed(onError, onSuccess) {
-		this.db.all('select max(max_speed) as max_speed, user_id, session.id as session_id, user.firstname, user.lastname from session, user where session.user_id = user.id group by user_id order by max_speed desc',
-			function(err, rows) {
-				if (err) {
-	            	onError(err);
-	        	} else {
-	        		onSuccess(rows);
-	            }
-			}
-		)
+		return new Promise((resolve,reject) => {
+			this.db.all('select max(max_speed) as max_speed, user_id, session.id as session_id, user.firstname, user.lastname from session, user where session.user_id = user.id group by user_id order by max_speed desc',
+				(err, rows) => {
+					if (err) reject(err);
+					resolve(rows);
+				}
+			)			
+		})
 	}
 
-	_stopSession(id, onError, onSuccess) {
+	_stopSession(id) {
 		let self = this;
-		// First test, if there is a session at all.
-		this.getSession(id,
-			function(err) {
-				onError(err);
-			},
-			function(session) {
-				if (session) {
-					// Nun das device ermitteln.
-					self.getDevice(session.device_id,
-						function(err) {
-							onError(err);
-						},
-						function(device) {
-							if (device) {
-								self.db.run("UPDATE session SET active=0, end=CURRENT_TIMESTAMP WHERE id=?",[id],function(err) {
-									if (err) {
-										onError(err)
-									} else {
-										// Session stopped
-										onSuccess(device)
-									}
-								});								
-							} else {
-								// No such device
-								onSuccess(null);
-							}
-						})
-
-				} else {
-					// No such session
-					onSuccess(null);
-				}
-			}
-		);
+		return new Promise((resolve, reject) => {
+			self.getSession(id)
+			.then(session => {
+				if (!session) return resolve(null);
+				self.getDevice(session.device_id)
+				.then(device => {
+					if (!device) return reject(new Error("No such device"));
+					self.db.run("UPDATE session SET active=0, end=CURRENT_TIMESTAMP WHERE id=?",[id],
+						(err) => {
+							if (err) reject(err);
+							resolve(device);
+						}
+					);								
+				})
+			})
+			.catch(err => reject(err));
+		});
 	}
 
 
@@ -209,66 +173,76 @@ class Backend {
 		)
 	}
 
-	getDevice(id, onError, onSuccess) {
-		this.db.all("SELECT * FROM device WHERE id=?", [id], 
-			function(err,rows) {
-				if (err) {
-					onError(err);
-				} else {
-					if (rows.length === 0) {
-						onSuccess(null);
+	getDevice(id) {
+		return new Promise((resolve,reject) => {			
+			this.db.get("SELECT * FROM device WHERE id=?", [id], 
+				function(err,row) {
+					if (err) { 
+						reject(err);
 					} else {
-						onSuccess(rows[0]);
+						resolve(row);
 					}
 				}
-			}
-		)
+			)
+		})
 	}
 
-	getDevices(onError, onSuccess) {
-		this.db.all("SELECT * FROM device ORDER BY human", 
-			function(err,rows) {
-				if (err) {
-					onError(err);
-				} else {
-					onSuccess(rows);
+	getDevices() {
+		return new Promise((resolve, reject) => {
+			this.db.all("SELECT * FROM device ORDER BY human", 
+				(err,rows) => {
+					if (err) {
+						reject(err);
+					} else {
+						resolve(rows);
+					}
 				}
-			}
-		)
-	}
-
-	isDeviceActive(deviceid, onError, onSuccess) {
-		this.db.all("SELECT id FROM session WHERE device_id=? AND active=1", [deviceid], function(err,rows) {
-			if (err) {
-				onError(err);
-			} else {
-				if (rows.length === 0) {
-					onSuccess(null);
-				} else {
-					onSuccess(rows[0]);
-				}
-			}
+			)
 		});
 	}
 
-	getSessionEntries(sessionid,clbk) {
-	    this.db.all("SELECT * FROM session_entry WHERE session_id=? ORDER BY seconds ASC",[sessionid], function (err, rows) {
-			if (err) {
-            	clbk({ "err" : err });
-        	} else {
-            	clbk({ "session_entry" : rows });
-            }
-    	});
+	isDeviceActive(deviceid, onError, onSuccess) {
+		return new Promise((resolve, reject) => {
+			this.db.get("SELECT id FROM session WHERE device_id=? AND active=1", [deviceid], 
+				(err,row) => {
+					if (err) return reject(err);
+					return resolve(row);
+				}
+			);	
+		});
 	}
 
-	getUserSession(userid, clbk) {
-	    this.db.all("SELECT * FROM session WHERE user_id=? ORDER BY start",[userid], function (err, rows) {
-			if (err) {
-            	clbk({ "err" : err });
-        	} else {
-            	clbk({ "sessions" : rows });
-            }
-    	});
+	getSessionEntries(sessionid) {
+		return new Promise((resolve, reject) => {
+			let result = [];
+			this.db.each("SELECT * FROM session_entry WHERE session_id=? ORDER BY seconds ASC",[sessionid], 
+				(err, row) => {
+					if (err) { 
+						reject(err);
+					} else {
+            			result.push(row);
+            		}
+            	},
+            	(err, count) => {
+					if (err) { 
+            			reject(err);
+            		} else {
+            			resolve(result);
+            		}	
+            	}
+    		);	
+		})
+	}
+
+	getUserSession(userid) {
+		return new Promise((resolve, reject) => {
+		    this.db.all("SELECT * FROM session WHERE user_id=? ORDER BY start",[userid], 
+		    	(err, rows) => {
+					if (err) return reject(err);
+	            	resolve(rows);
+	            }
+	    	);			
+		})
 	}
 
 	insertSessionEntry(data) {

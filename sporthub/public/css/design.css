@@ -17,6 +17,30 @@ BODY {
 	overflow: hidden;
 }
 
+@media (max-width: 1440px) {
+  BODY {
+	font-size: 16pt;
+  }	
+}
+
+.header {
+	background-color: white;
+	padding: 10px 50px;
+	color: #3C4941;
+}
+
+H1 {
+	font-size: 1.4em;
+	margin: 0px;
+	padding-bottom: 0px;
+}
+
+H2 {
+	font-size: 1em;
+	margin: 0px;
+	padding-top: 5px;
+}
+
 .menu {
 	display: flex;
 	flex-direction: row;
@@ -33,7 +57,7 @@ BODY {
 	flex-wrap: nowrap;
 	font-weight: 600;
 	background-color: #ffc20c;
-	font-size: 2.5em;
+	font-size: 1.5em;
 	margin-bottom: 1em;
 }
 
@@ -74,7 +98,7 @@ BODY {
 	width: 100%;
 	font-size: 2em;
 	justify-content: space-between;
-	padding: 20px 0px;
+	padding: 0.3em 0px;
 }
 
 .row:HOVER {

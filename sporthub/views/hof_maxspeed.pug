@@ -1,5 +1,6 @@
 include include/menu.pug  
 each entry in hof
   .row
-    .item #{entry.firstname} #{entry.lastname}
-    .item #{numeral(entry.max_speed).format('0.00')} m/s
+    .item 
+      div #{entry.firstname} #{entry.lastname}
+      .small #{numeral(entry.max_speed).format('0.00')} m/s

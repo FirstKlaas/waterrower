@@ -1,4 +1,10 @@
 include include/menu.pug  
-.column
-	.item(onClick='showHofMaxSpeed()') Höchste Geschwindigkeit
-	.item(onClick='showHofDistance()') Gesamtstrecke
+div.row(onClick='showHofMaxSpeed()')  
+  .item 
+    i(class="fa fa-trophy",aria-hidden="true")
+    span &nbsp;Top Speed
+
+div.row(onClick='showHofDistance()')  
+  .item 
+    i(class="fa fa-trophy",aria-hidden="true")
+    span &nbsp;Gesamtstrecke

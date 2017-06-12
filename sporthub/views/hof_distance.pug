@@ -1,5 +1,6 @@
 include include/menu.pug  
 each entry in hof
   .row(onClick='setUser(' + entry.user_id +')')
-    .item #{entry.firstname} #{entry.lastname}
-    .item #{numeral(entry.distance / 1000).format('0,0.00')} km
+    .item 
+      div #{entry.firstname} #{entry.lastname}
+      .small #{numeral(entry.distance / 1000).format('0,0.00')} km

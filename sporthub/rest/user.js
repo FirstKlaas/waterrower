@@ -6,14 +6,9 @@ var exports = module.exports = (app) => {
 	const router = express.Router() 
 
 	router.get('/', function (req, res) {
-	    backend.getUsers(
-	        function(err)  {
-	            res.status(500).json({"err":err});            
-	        },
-	        function (users) {
-	            res.json({"user" : users});
-	        }
-	    );
+	    backend.getUsers()
+	    .then(users => res.json({"user" : users}))
+	    .catch(error => res.status(500).json({"err":err}));
 	});
 
 

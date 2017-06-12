@@ -25,10 +25,10 @@ class Backend {
 		});
 	}
 
-	getSessions(onError, onSuccess) {
+	getSessions() {
 		return new Promise((resolve,reject) => {
-		    this.db.all("SELECT * FROM session ORDER BY id DESC", function (err, rows) {
-				if (err) return reject(err);
+			this.db.all("SELECT * FROM session ORDER BY id DESC", (err, rows) => {
+		    	if (err) return reject(err);
 				resolve(rows);
 		    });			
 		})

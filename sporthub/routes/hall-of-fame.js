@@ -9,25 +9,15 @@ var exports = module.exports = (app) => {
 	})
 
 	router.get('/maxspeed.html',function (req, res) {
-		let device = backend.getHallOfFameMaxSpeed(
-	        function(err) {
-	            res.status(500).send({'err':err})
-	        },
-	        function(entries) {
-	        	res.render('hof_maxspeed', { 'hof': entries});
-	        }
-	    )
+		backend.getHallOfFameMaxSpeed()
+		.then(entries => res.render('hof_maxspeed', { 'hof': entries}))
+		.catch(err => res.status(500).send({'err':err}));
 	})
 
 	router.get('/distance.html',function (req, res) {
-	    let device = backend.getHallOfFameDistance(
-	        function(err) {
-	            res.status(500).send({'err':err})
-	        },
-	        function(entries) {
-	            res.render('hof_distance', { 'hof': entries});
-	        }
-	    )
+	    backend.getHallOfFameDistance()
+	    .then(entries => res.render('hof_distance', { 'hof': entries}))
+	    .catch(err => res.status(500).send({'err':err}));
 	})
 
 	return router;

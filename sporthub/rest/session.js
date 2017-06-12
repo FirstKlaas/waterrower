@@ -7,26 +7,16 @@ var exports = module.exports = (app) => {
 	const router = express.Router() 
 
 	router.get('/', function (req, res) {
-	    backend.getSessions(
-	        function (err) {
-	            res.status(500).json({"err":err});
-	        },
-	        function (data) {
-	            res.json({"sessions":data});
-	        }
-	    );
+	    backend.getSessions()
+	    .then(data => res.json({"sessions":data}))
+	    .catch(err => res.status(500).json({"err":err}));
 	});
 
 
 	router.get('/active', function (req, res) {
-	    backend.getActiveSessions(
-	        function (err) {
-	            res.status(500).json({"err":err});
-	        },
-	        function (data) {
-	            res.json({"sessions":data});
-	        }
-	    );
+	    backend.getActiveSessions()
+	    .then(data => res.json({"sessions":data}))
+	    .catch(er => res.status(500).json({"err":err}));
 	});
 
 	/**
@@ -51,33 +41,21 @@ var exports = module.exports = (app) => {
 	router.get('/start/:userid/:deviceid', function(req, res) {
 	    let device = null;
 
-	    backend.getDevice(req.params.deviceid, 
-	        function(err) {
-	            // Database error
-	            res.status(500).json({"err" : err});
-	        },
-	        function(device) {
-	            if (device) {
-	                backend.startSession(req.params.userid,req.params.deviceid, 
-	                    function(err) {
-	                        // Database error
-	                        res.status(500).json({"err" : err});
-	                    }, 
-	                    function(session) {
-	                        res.json({"session" : session});
-	                        waterrower.startSession(device.mac,session.id);
-	                        //console.log('Sending start command to mqtt session id = ' + session.id)
-	                
-	                        waterrower.startSession()
-	                    }
+	    backend.getDevice(req.params.deviceid)
+	    .then(device => {
+	    	if (!device) {
+	    		res.status(404).json({"err" : "No such device"})
+	    	} else {
+	    		backend.startSession(req.params.userid,req.params.deviceid)
+	    		.then(session => {
+	    			res.json({"session" : session});
+                    waterrower.startSession(device.mac,session.id);
+	                        
+	    		})
+	    	}
 
-	                );
-	            } else {
-	                // No device found (Status File not Found)
-	                res.status(404).json({"err" : "No such device"});
-	            }        
-	        }
-	    );
+	    })
+	    .catch(err => res.status(500).json({"err" : err}));
 	});
 
 	/**
@@ -107,15 +85,13 @@ var exports = module.exports = (app) => {
             } else {
                 res.status(404).json({});
             }
-	    }).catch((err) => {
-	    	res.status(500).json({"err" : err});
-	    });
+	    }).catch((err) => res.status(500).json({"err" : err}));
 	});
 
 	router.get('/:sessionid', function (req, res) {
-	    backend.getSession(req.params.sessionid, function(data) {
-	        res.json(data);
-	    })
+	    backend.getSession(req.params.sessionid)
+	    .then(data => res.json(data))
+	    .catch((err) => res.status(500).json({"err" : err}));
 	});
 
 	router.get('/entry/:sessionid', function (req, res, next) {

@@ -20,13 +20,13 @@ function stopSession() {
 	console.log("Stopping session " + session.id);
 	$.getJSON( "/rest/session/stop/" + session.id, function( data ) {
 		session = null;
-		//setupActions();
 	});
 }
 
 function setDevice(id, clb) {
 	$.getJSON( "/rest/device/" + id , function( data ) {
 		device = data.device;
+		$('#current-device').text(device.human);
 	    clb(device);
 	});
 }
@@ -34,6 +34,7 @@ function setDevice(id, clb) {
 function setUser(id, clb) {
 	$.getJSON( "/rest/user/" + id , function( data ) {
 		user = data.user;
+		$('#current-user').text(user.firstname);
 	    clb(user);
 	});
 }
@@ -55,6 +56,7 @@ function startSession() {
 function showMainMenu() {
 	$('#content').load('/menu.html',
 		function() {
+			$('#pagetopic').text('Main Menu');
 		}
 	);
 }
@@ -62,6 +64,7 @@ function showMainMenu() {
 function showSessions() {
 	$('#content').load('/sessions.html',
 		function() {
+			$('#pagetopic').text('Trainings');
 		}
 	);
 }
@@ -69,7 +72,7 @@ function showSessions() {
 function showDevices() {
 	$('#content').load('/devices.html',
 		function() {
-			setupActions();
+			$('#pagetopic').text('Geräte');
 		}
 	);
 }
@@ -77,7 +80,7 @@ function showDevices() {
 function showUser() {
 	$('#content').load('/user.html',
 		function() {
-			setupActions();
+			$('#pagetopic').text('Sportler');
 		}
 	);
 }
@@ -85,6 +88,7 @@ function showUser() {
 function showHallOfFame() {
 	$('#content').load('/hof',
 		function() {
+			$('#pagetopic').text('Bestenliste');
 		}
 	);
 }
@@ -92,6 +96,7 @@ function showHallOfFame() {
 function showHofMaxSpeed() {
 	$('#content').load('/hof/maxspeed.html',
 		function() {
+			$('#pagetopic').text('Höchstes Tempo');
 		}
 	);
 }
@@ -99,6 +104,7 @@ function showHofMaxSpeed() {
 function showHofDistance() {
 	$('#content').load('/hof/distance.html',
 		function() {
+			$('#pagetopic').text('Gesamtstrecke');
 		}
 	);
 }
@@ -106,6 +112,7 @@ function showHofDistance() {
 function showLive() {
 	if (user && device) {
 		$('#content').load('/livedata.html', function() {
+			$('#pagetopic').text('Live Data');
 			setupActions();
 		});
 	};

@@ -1,13 +1,15 @@
-include include/menu.pug  
 .row  
-  .item Tempo
-  .item#speed &nbsp
+  .item
+    #speed 0
+    .small Tempo [m/s]
 .row
-  .item Zeit  
-  .item#ds &nbsp
-.row
-  .item Distanz  
-  .item#dd &nbsp
+  .item 
+    #ds 00:00:00
+    .small Zeit
+.row 
+  .item
+    #dd 0
+    .small Strecke
 .row  
   .item#startstop [-]
       

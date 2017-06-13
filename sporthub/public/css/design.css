@@ -4,9 +4,9 @@ HTML {
 }
 
 BODY {
-	background-color: #3C4941;
-	font-family: 'Nova Mono', 'Dosis', sans-serif;
-	color: white;
+	background-color: white;
+	font-family: 'Roboto Condensed', sans-serif;
+	color: #000000;
 	font-size: 35pt;
 	margin: 0px;
 	padding: 0px;
@@ -17,28 +17,49 @@ BODY {
 	overflow: hidden;
 }
 
-@media (max-width: 1440px) {
+@media (max-width: 440px) {
   BODY {
 	font-size: 16pt;
   }	
 }
 
 .header {
-	background-color: white;
-	padding: 10px 50px;
-	color: #3C4941;
+	display: flex;
+	flex-direction: row;
+	flex: 0 0 auto;
+	flex-wrap: nowrap;
+	background-color: #007aff;
+	padding: 10px 10px;
+	color: white;
+	font-weight: 400;
+}
+
+.header .icon {
+	display: flex;
+	font-size: 1.2em;
+	flex: 0 1 auto;
+	padding: 8px 30px;
+}
+
+
+.header .title {
+	display: flex;
+	font-size: 1.3em;
+	flex: 1 0 auto;
+	flex-direction: column;
 }
 
 H1 {
-	font-size: 1.4em;
+	font-size: 1.0em;
 	margin: 0px;
 	padding-bottom: 0px;
 }
 
 H2 {
-	font-size: 1em;
+	font-size: 0.7em;
 	margin: 0px;
 	padding-top: 5px;
+	font-weight: 300;
 }
 
 .menu {
@@ -55,10 +76,12 @@ H2 {
 	display: flex;
 	flex-direction: row;
 	flex-wrap: nowrap;
-	font-weight: 600;
-	background-color: #ffc20c;
+	font-weight: 300;
+	background-color: #90dc4e;
 	font-size: 1.5em;
 	margin-bottom: 1em;
+	color: white;
+	padding: 5px 0px;
 }
 
 .menu-item {
@@ -68,7 +91,6 @@ H2 {
 	flex-wrap: nowrap;
   	justify-content: center;
 	padding: 1px 10px;
-	color: #3C4941;
 	cursor: pointer;
 	white-space: nowrap;
   	align-items: center;
@@ -168,6 +190,7 @@ H2 {
 }
 
 .small {
+	color: #999999;
 	font-size: 0.5em;
 }
 

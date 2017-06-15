@@ -2,9 +2,11 @@ const express = require('express');
 const app = express();
 const server = require('http').createServer(app);
 const io = require('socket.io').listen(server);
-const conf = require('./config.json');
+const configuration = require('./config.json');
 const sqlite3 = require('sqlite3').verbose();
 
+var conf = configuration[app.get('env')];
+console.log('We are in ' + app.get('env') + ' mode');
 
 var db = new sqlite3.Database(conf.database);
 

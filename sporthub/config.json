@@ -1,7 +1,17 @@
 {
-	"port": 9090,
-	"static_dir" : "public",
-	"database" : "db/sporthub.db",
-    "json_content_type" : "application/json",
-    "mqttserver" : "blender"
+    "production" : {
+		"port": 80,
+		"static_dir" : "public",
+		"database" : "db/sporthub.db",
+	    "json_content_type" : "application/json",
+	    "mqttserver" : "blender"
+    },
+
+    "development" : {
+		"port": 9090,
+		"static_dir" : "public",
+		"database" : "db/sporthub_dev.db",
+	    "json_content_type" : "application/json",
+	    "mqttserver" : "blender"
+    }
 }

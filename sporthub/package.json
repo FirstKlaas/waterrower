@@ -4,7 +4,7 @@
   "description": "Rest API for the Sportshub",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cross-env NODE_ENV=production node server.js"
   },
   "author": "Klaas Nebuhr",
   "license": "ISC",
@@ -20,5 +20,8 @@
     "pug": "^2.0.0-rc.1",
     "socket.io": "^1.4.8",
     "sqlite3": "^3.1.4"
+  },
+  "devDependencies": {
+    "cross-env": "^5.0.1"
   }
 }

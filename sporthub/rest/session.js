@@ -76,7 +76,6 @@ var exports = module.exports = (app) => {
 	**/
 	router.get('/stop/:sessionid', function(req, res) {
 		backend.stopSession(req.params.sessionid).then(device => {
-			console.log(device);
 			if (device) {
                 /* Session stopped successfully in database */
                 /* Now sending stop command to the device   */

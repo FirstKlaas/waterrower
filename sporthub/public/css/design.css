@@ -184,6 +184,14 @@ H2 {
 	padding-left: 30px;
 }
 
+.big {
+	font-size: 3em;
+}
+
+.center {
+	text-align: center;
+}
+
 .button {
 	cursor: pointer;
 }

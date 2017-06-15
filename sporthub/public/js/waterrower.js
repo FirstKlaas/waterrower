@@ -40,10 +40,14 @@ function setUser(id, clb) {
 }
 
 function startSession() {
+	console.log('start session');
 	if (!user) return;
+	console.log('has user');
 	if (!device) return;
+	console.log('has device');
 	if (session) return;
-	
+	console.log('has no session');
+	console.log("/rest/session/start/" + user.id + "/" + device.id);
 	$.getJSON( "/rest/session/start/" + user.id + "/" + device.id, function( data ) {
 		session = data.session;
 		console.log(session);
@@ -127,9 +131,6 @@ function startStopSession() {
 }
 
 function setupActions() {
-	if (user) {
-		$('#name').text('Hallo ' + user.firstname);
-	}
 	if (session) {
 		$('#startstop').text('[STOP]');
 		$('#startstop').one('click',function() {
@@ -230,7 +231,7 @@ socket.on('message',
 
 socket.on('session-start',
 	function(data) {
-		console.log('io=> session-start' + data);
+		console.log('io=> session-start ' + JSON.stringify(data));
 		onInit();
 	}
 );
@@ -238,7 +239,7 @@ socket.on('session-start',
 socket.on('session-stop',
 	function(data) {
 		session = null;
-		console.log('io=> session-stop ' + data);
+		console.log('io=> session-stop ' + JSON.stringify(data));
 		onInit();
 	}
 );

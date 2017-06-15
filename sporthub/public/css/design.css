@@ -123,11 +123,6 @@ H2 {
 	padding: 0.3em 0px;
 }
 
-.row:HOVER {
-	background-color: white;
-	cursor: pointer;
-}
-
 .row:first-child {
 	margin-top: 1em;
 }
@@ -184,8 +179,17 @@ H2 {
 	padding-left: 30px;
 }
 
+.small {
+	color: #999999;
+	font-size: 0.5em;
+}
+
 .big {
 	font-size: 3em;
+}
+
+.middle {
+	font-size: 1.5em;
 }
 
 .center {
@@ -198,11 +202,6 @@ H2 {
 
 .right {
 	align-self: flex-end;
-}
-
-.small {
-	color: #999999;
-	font-size: 0.5em;
 }
 
 .livecontainer {

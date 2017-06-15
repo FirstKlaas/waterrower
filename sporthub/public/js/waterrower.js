@@ -132,13 +132,17 @@ function startStopSession() {
 
 function setupActions() {
 	if (session) {
-		$('#startstop').text('[STOP]');
-		$('#startstop').one('click',function() {
+		var elem = $('#startstop');
+		elem.removeClass('fa-play-circle-o');
+		elem.addClass('fa-stop-circle-o');
+		elem.one('click',function() {
 			stopSession();
 		});			
 	} else {
-		$('#startstop').text('[START]');
-		$('#startstop').one('click',function() {
+		var elem = $('#startstop');
+		elem.removeClass('fa-stop-circle-o');
+		elem.addClass('fa-play-circle-o');
+		elem.one('click',function() {
 			startSession();
 		});
 	}
@@ -222,9 +226,9 @@ socket.on('message',
 		//console.log(data)
 		currentSession = data.sessionid;
 		$('#dd').text(formatDistance(data.distance));
-		$('#speed').text(numeral(data.speed).format('0,0.00') + ' m/s');
-		$('#max_speed').text(numeral(data.max_speed).format('0,0.00') + ' m/s');
-		$('#avg_speed').text(numeral(data.avg_speed).format('0,0.00') + ' m/s');
+		$('#speed').text(numeral(data.speed).format('0,0.00'));
+		$('#max_speed').text(numeral(data.max_speed).format('0,0.00'));
+		$('#avg_speed').text(numeral(data.avg_speed).format('0,0.00'));
 		$('#ds').text(numeral(data.seconds).format('00:00:00'));
 		$('#ticks').text(data.ticks);
 	});

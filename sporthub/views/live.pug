@@ -1,14 +1,23 @@
 .row  
   .item
-    .center#speed 0
+    .center.middle#speed 0
     .small.center Tempo [m/s]
   .item
-    .center#dd 0
+    .center.middle#dd 0
     .small.center Strecke
 .row
-  .item.big 
-    .center#ds 00:00:00
+  .item 
+    .center.big#ds 00:00:00
     .small.center Zeit
 .row  
-  .item#startstop(style="text-align:center") [-]
-      
+  .item
+    .center.middle#max_speed 0
+    .small.center Maximum [m/s]
+  .item
+    .center.middle#avg_speed 0
+    .small.center Durcgschnitt [m/s] 
+.row
+  .item
+  .item.center.big
+    i#startstop(class="fa fa-play-circle-o",aria-hidden="true")  
+  .item    

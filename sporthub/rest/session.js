@@ -51,7 +51,7 @@ var exports = module.exports = (app) => {
 	    			res.json({"session" : session});
                     waterrower.startSession(device.mac,session.id);
 	                        
-	    		})
+	    		}).catch( err => res.status(500).json({"err" : err}));
 	    	}
 
 	    })
@@ -75,13 +75,13 @@ var exports = module.exports = (app) => {
 	*   
 	**/
 	router.get('/stop/:sessionid', function(req, res) {
-		backend.stopSession(req.params.sessionid).then((device) => {
+		backend.stopSession(req.params.sessionid).then(device => {
 			if (device) {
                 /* Session stopped successfully in database */
                 /* Now sending stop command to the device   */
                 waterrower.stopSession(device.mac,req.params.sessionid);
                 /* No data in this case */      
-                res.json({});
+                res.json({"device" : device});
             } else {
                 res.status(404).json({});
             }

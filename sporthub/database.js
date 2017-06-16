@@ -75,22 +75,24 @@ class Backend {
 		})
 	}
 
-	_stopSession(id) {
+	stopSession(id) {
 		let self = this;
 		return new Promise((resolve, reject) => {
 			self.getSession(id)
 			.then(session => {
 				if (!session) return resolve(null);
+				if (session.active === 0) return resolve(null);
+
 				self.getDevice(session.device_id)
 				.then(device => {
 					if (!device) return reject(new Error("No such device"));
 					self.db.run("UPDATE session SET active=0, end=CURRENT_TIMESTAMP WHERE id=?",[id],
-						(err) => {
-							if (err) reject(err);
+						err => {
+							if (err) return reject(err);
 							resolve(device);
 						}
 					);								
-				})
+				}).catch( err => reject(err));
 			})
 			.catch(err => reject(err));
 		});
@@ -118,59 +120,27 @@ class Backend {
 		});
 	}
 
-	stopSession(id) {
-		let self = this;
-		return new Promise((resolve,reject) => {
-			self._stopSession(id,
-				(error) => {
-					reject(error);
-				},
-				(device) => {
-					resolve(device);
-				}
-			);
-		});
-	}
-
-	startSession(userid, deviceid, onError, onSuccess) {
+	startSession(userid, deviceid) {
 		let database = this.db;
 		let self = this;
-
-		this.isDeviceActive(deviceid, 
-			function(err) {
-				onError(err);
-			},
-			function(session) {
-				if (session) {
-					// Es gibt bereits eien active session fuer 
-					// dieses device.
-					return onSuccess(null); 
-				} else {
+		return new Promise((resolve, reject) => {
+			self.isDeviceActive(deviceid).then(
+				session => {
+					if (session) return resolve(session);
 					database.run("INSERT into session(user_id,device_id, active) VALUES (?,?,1)",[userid,deviceid],
 						function(err) {
-							if (err) {
-								onError(err);
-							} else {
-								let lastID = this.lastID;
-								self.getSession(this.lastID,
-									function(err) {
-	                            		onError(err);
-	                            	},
-	                            	function(data) {
-	                            		if (data) {
-	                            			// Session successfully created
-	                            			onSuccess(data);
-	                            		} else {
-	                            			onError("No such session with id " + lastID);		
-	                            		}	                           
-	                            	}	
-								);
-							}
-			    		}
-			    	);					
+							if (err) return reject(new Error(err));
+							self.getSession(this.lastID).then(
+								session => {
+									if (session) return resolve(session);
+									reject(new Error('Could not create new Session'));
+								}
+							).catch ( err => reject(err));
+						}
+					)	
 				}
-			}
-		)
+			).catch( err => reject(err));	
+		})
 	}
 
 	getDevice(id) {

@@ -32,12 +32,17 @@ waterrower.on('device-connected', function(sender, payload) {
     console.log("Device registered.");
 });
 
-waterrower.on('session-start', function(sender) {
-    io.emit('session-start', sender.getSessionId());
+
+waterrower.on('session-start', function(sender, id) {
+    backend.getSession(id).then(
+        session => io.emit('session-start', session) 
+    ) 
 });
 
 waterrower.on('session-stop', function(sender, sessionid) {
-    io.emit('session-stop', sessionid);
+    backend.getSession(sessionid).then(
+        session => io.emit('session-stop', session)
+    )
 });
 
 // Setting up routes

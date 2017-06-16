@@ -69,7 +69,7 @@ class Waterrower extends EventEmitter {
         payload[2] = id & 0xFF;       // Lowbyte Session
         payload[3] = REAL_DEVICE; // FAKE_DEVICE               // Using Fake Device
         this.mqtt.publish(mac, payload);
-        this.emit('session-start', this);
+        this.emit('session-start', this, id);
 	}
 
 	getSessionId() {

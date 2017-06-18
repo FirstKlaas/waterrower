@@ -5,3 +5,4 @@
 **/*.db
 .idea/
 **/*.log
+twitter.json

@@ -6,6 +6,23 @@ const configuration = require('./config.json');
 const sqlite3 = require('sqlite3').verbose();
 
 var conf = configuration[app.get('env')];
+var twitter_conf = require('./twitter.json');
+
+var Twitter = require('twitter');
+
+var twitter_client = new Twitter({
+  consumer_key: twitter_conf.consumer_key,
+  consumer_secret: twitter_conf.consumer_secret,
+  access_token_key: twitter_conf.access_token_key,
+  access_token_secret: twitter_conf.access_token_secret
+});
+
+/**
+twitter_client.get('users/lookup', {screen_name:twitter_conf.owner})
+    .then( data => console.log(data))
+    .catch( err => console.log(err));
+**/
+
 console.log('We are in ' + app.get('env') + ' mode');
 
 var db = new sqlite3.Database(conf.database);
@@ -31,7 +48,6 @@ waterrower.on('data', function (sender, data) {
 waterrower.on('device-connected', function(sender, payload) {
     console.log("Device registered.");
 });
-
 
 waterrower.on('session-start', function(sender, id) {
     backend.getSession(id).then(

@@ -92,6 +92,14 @@ function showSessions() {
 	});
 }
 
+function deleteSession(id, update, sender) {
+	$.getJSON( "/rest/session/delete/" + id, data => {
+		if (update) {
+			$(sender).parent().hide();
+		}
+	});
+}
+
 function showDevices() {
 	$('#content').load('/devices.html',
 		function() {

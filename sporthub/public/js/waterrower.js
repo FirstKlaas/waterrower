@@ -65,12 +65,31 @@ function showMainMenu() {
 	);
 }
 
+function findUser(id, userarr) {
+	return userarr.find(user => {
+		return user.id == id;
+	});
+}
+
 function showSessions() {
-	$('#content').load('/sessions.html',
-		function() {
-			$('#pagetopic').text('Trainings');
-		}
-	);
+	$.getJSON( "/rest/user", data => {
+		console.log(findUser(1,data.user));
+		$('#content').load('/sessions.html',
+			function() {
+				$("div[userid]").each( function(index) {
+					var userid = $( this ).attr('userid');
+					var user = findUser(userid, data.user);
+					if (user) {
+						$( this ).text(user.firstname);
+					} else {
+						$( this ).text('Guest');
+					}
+				});
+
+				$('#pagetopic').text('Workouts');
+			}
+		);
+	});
 }
 
 function showDevices() {
@@ -112,6 +131,15 @@ function showHofDistance() {
 		}
 	);
 }
+
+function showSessionsWhat() {
+	$('#content').load('/sessions.html',
+		function() {
+			$('#pagetopic').text('Workouts');
+		}
+	);
+}
+
 
 function showLive() {
 	if (user && device) {

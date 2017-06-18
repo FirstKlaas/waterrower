@@ -1,4 +1,51 @@
+var ddl_user = `CREATE TABLE IF NOT EXISTS "user" (
+    id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+    login      TEXT NOT NULL UNIQUE,
+    password   TEXT NOT NULL,
+    firstname  TEXT NOT NULL,
+    lastname   TEXT NOT NULL,
+    session_id INTEGER
+);`;
+
+var ddl_session_entry = `CREATE TABLE IF NOT EXISTS "session_entry" (
+    id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+    seconds     INTEGER NOT NULL DEFAULT 0,
+    avg_speed   REAL NOT NULL DEFAULT 0.0,
+    speed       REAL NOT NULL DEFAULT 0.0,
+    session_id  INTEGER NOT NULL,
+    distance    INTEGER NOT NULL DEFAULT 0
+);`;
+
+var ddl_session = `
+CREATE TABLE IF NOT EXISTS "session" (
+    id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+    distance  INTEGER NOT NULL DEFAULT 0,
+    max_speed REAL NOT NULL DEFAULT 0.0,
+    avg_speed REAL DEFAULT 0.0,
+    start     INTEGER NOT NULL DEFAULT current_timestamp,
+    end       INTEGER NOT NULL DEFAULT current_timestamp,
+    user_id   INTEGER NOT NULL,
+    device_id INTEGER NOT NULL,
+    active    INTEGER NOT NULL DEFAULT 1
+);`;
+
+var ddl_device = `
+CREATE TABLE IF NOT EXISTS "device" (
+    id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+    mac       TEXT NOT NULL UNIQUE,
+    human     TEXT NOT NULL UNIQUE,
+    active    INTEGER NOT NULL DEFAULT 0
+);`;
+
 var exports = module.exports = (db) => {
+
+	db.serialize(function() {
+	    db.run(ddl_user);
+	    db.run(ddl_session_entry);
+	    db.run(ddl_session);
+	    db.run(ddl_device);
+	});
+
 	return new Backend(db);
 };
 
@@ -18,7 +65,7 @@ class Backend {
 
 	getUser(id) {
 		return new Promise((resolve,reject) => {
-		    this.db.get("SELECT * FROM user WHERE id=?", [id],function (err, row) {
+		    this.db.get("SELECT * FROM user WHERE id=?", [id], (err, row) => {
 				if (err) return reject(err);
 	            resolve(row);
 	    	});
@@ -41,6 +88,18 @@ class Backend {
 				resolve(row);
 	    	});
 	    });
+	}
+
+	deleteSession(id) {
+		return new Promise((resolve,reject) => {
+			this.db.parallelize(() => {
+				this.db.run("DELETE FROM session_entry WHERE session_id=?", [id]);
+				this.db.run("DELETE FROM session WHERE id=?", [id]);
+				
+			});
+			resolve();
+			
+		});
 	}
 
 	getActiveSessions() {

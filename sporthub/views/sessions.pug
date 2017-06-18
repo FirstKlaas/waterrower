@@ -1,32 +1,33 @@
-div.row.headline 
-  div.fixed40 id 
-  div.fixed120 Distance 
-  div.fixed120 Max. Speed 
-  div.fixed120 Avg. Speed 
-  div.fixed180 Start 
-  div.fixed180 End 
-  div.fixed60 User 
-  div.fixed60 Device
-  div.item Active
+-function prettyDate(dateString) {
+  -var date = new Date(dateString);
+  -var monthNames = [ "Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez" ];
+  -var d = date.getDate();
+  -var m = monthNames[date.getMonth()]
+  -var y = date.getFullYear();
+  -return d+' '+m+' '+y;
+-}
+
+-function prettyTime(dateString) {
+  -var date = new Date(dateString);
+  -var h = date.getHours();
+  -var m = date.getMinutes();
+  -return h+':'+m;
+-}
+
+-function prettyDuration(session) {
+  -var dt1 = new Date(session.start);
+  -var dt2 = new Date(session.end);
+  -var udt1 = Date.UTC(dt1.getFullYear(), dt1.getMonth(), dt1.getDate(), dt1.getHours(), dt1.getMinutes(), dt1.getSeconds());
+  -var udt2 = Date.UTC(dt2.getFullYear(), dt2.getMonth(), dt2.getDate(), dt2.getHours(), dt2.getMinutes(), dt2.getSeconds());
+  
+  -return Math.ceil((udt2 - udt1) /(1000 * 60));
+-}
 
 each session in sessions
-  div.row 
-    div
-      .fixed40 [#{session.id}] 
-      .item.right #{session.distance} m
-    div   
-      div.fixed120.right #{session.max_speed} m/s 
-      div.item.right #{session.avg_speed} m/s
-    div 
-      div.fixed180 #{session.start} 
-      div.item #{session.end}
-    div 
-      div.fixed60
-        a(href='/user/' + session.user_id) #{session.user_id} 
-      div.fixed60
-        a(href='/device/' + session.device_id) #{session.device_id}
-      if (session.active != 0)  
-        div.item(onclick='stopSession(' + session.id + ')') Active
-      else
-        div.item &nbsp;
-  
+  .row 
+    .item
+      div(userid=session.user_id) #{session.distance} 
+      .small #{session.distance} m [#{session.id}]
+    .item 
+      div #{prettyDate(session.start)}
+      .small [#{prettyDuration(session)}min] #{prettyTime(session.start)} - #{prettyTime(session.end)} 

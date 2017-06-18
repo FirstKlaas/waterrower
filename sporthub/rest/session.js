@@ -8,7 +8,17 @@ var exports = module.exports = (app) => {
 
 	router.get('/', function (req, res) {
 	    backend.getSessions()
-	    .then(data => res.json({"sessions":data}))
+	    .then(data => {
+	    	data.forEach( session => {
+	    	});
+	    	res.json({"sessions":data})
+	    })
+	    .catch(err => res.status(500).json({"err":err}));
+	});
+
+	router.get('/delete/:id', function (req, res) {
+	    backend.deleteSession(req.params.id)
+	    .then(() => res.json({"sessionid":req.params.id}))
 	    .catch(err => res.status(500).json({"err":err}));
 	});
 

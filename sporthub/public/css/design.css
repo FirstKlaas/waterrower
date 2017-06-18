@@ -166,17 +166,13 @@ H2 {
 }
 
 .item:last-child {
-	padding-right: 20px;
+	padding-right: 60px;
 	text-align: right;
 }
 
 .item:first-child {
 	padding-left: 60px;
 	text-align: left;
-}
-
-.item I {
-	padding-left: 30px;
 }
 
 .small {

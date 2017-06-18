@@ -17,17 +17,13 @@ var twitter_client = new Twitter({
   access_token_secret: twitter_conf.access_token_secret
 });
 
-/**
-twitter_client.get('users/lookup', {screen_name:twitter_conf.owner})
-    .then( data => console.log(data))
-    .catch( err => console.log(err));
-**/
+var twitter_util = require('./twitter-util.js')(twitter_client);
 
 console.log('We are in ' + app.get('env') + ' mode');
 
 var db = new sqlite3.Database(conf.database);
 
-var backend = require('./database.js')(db);
+var backend = require('./database.js')(db,twitter_util);
 
 // Statische Files aus diesem Pfad ausliefern
 app.use(express.static(conf.static_dir));
@@ -37,6 +33,7 @@ const waterrower = require('./waterrower.js')(conf.mqttserver);
 
 app.set('backend',backend);
 app.set('waterrower',waterrower);
+app.set('twitter', twitter_util);
 
 app.locals.numeral = require('numeral');
 

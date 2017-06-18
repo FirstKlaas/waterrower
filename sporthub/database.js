@@ -4,7 +4,8 @@ var ddl_user = `CREATE TABLE IF NOT EXISTS "user" (
     password   TEXT NOT NULL,
     firstname  TEXT NOT NULL,
     lastname   TEXT NOT NULL,
-    session_id INTEGER
+    session_id INTEGER,
+    twitter    TEXT
 );`;
 
 var ddl_session_entry = `CREATE TABLE IF NOT EXISTS "session_entry" (
@@ -37,7 +38,7 @@ CREATE TABLE IF NOT EXISTS "device" (
     active    INTEGER NOT NULL DEFAULT 0
 );`;
 
-var exports = module.exports = (db) => {
+var exports = module.exports = (db,twitter) => {
 
 	db.serialize(function() {
 	    db.run(ddl_user);
@@ -46,20 +47,36 @@ var exports = module.exports = (db) => {
 	    db.run(ddl_device);
 	});
 
-	return new Backend(db);
+	return new Backend(db,twitter);
 };
 
 class Backend {
-	constructor (db) {
+	constructor (db,twitter) {
 		this.db = db;
+		this.twitter = twitter;
 	}
 
 	getUsers() {
 		return new Promise((resolve, reject) => {
-			this.db.all("SELECT * FROM user", function(err, rows) {
-				if (err) return reject(err);
-				resolve(rows);
-	        });
+			let users = []; 
+			let self = this;
+
+			this.db.each("SELECT * FROM user",
+				function(err, row) {
+					if (err) return reject(err);
+					if (row.twitter) {
+						self.twitter.getUserInfo(row.twitter)
+						.then( data => {
+							if (data) row.twitter_profile = data;
+						})
+					}
+					users.push(row);
+				},
+				function(err,count) {
+					if (err) return reject(err);
+					resolve(users);	
+				}	
+	        );
 		});
 	}
 
@@ -67,7 +84,16 @@ class Backend {
 		return new Promise((resolve,reject) => {
 		    this.db.get("SELECT * FROM user WHERE id=?", [id], (err, row) => {
 				if (err) return reject(err);
-	            resolve(row);
+				if (row.twitter) {
+					this.twitter.getUserInfo(row.twitter)
+					.then( data => {
+						if (!data) return resolve(row); 
+						row.twitter_profile = data;
+						return resolve(row);
+					})
+				} else {
+	            	resolve(row);
+	            }
 	    	});
 		});
 	}

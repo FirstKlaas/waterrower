@@ -3,6 +3,7 @@ const express = require('express')
 
 var exports = module.exports = (app) => {
 	let backend = app.get('backend');
+
 	const router = express.Router() 
 
 	router.get('/', function (req, res) {
@@ -17,7 +18,7 @@ var exports = module.exports = (app) => {
 	    	.then(user => {
 	            if (user == null) {
 	                res.status(404).json({"userid":req.params.userid})
-	            } else {
+	            } else {	            	
 	                res.json({"user" : user});
 	            }	    		
 	    	})
@@ -29,7 +30,6 @@ var exports = module.exports = (app) => {
 	    	.then(data => res.json(data))
 	    	.catch(error => res.status(500).json({"err":err}));    
 	});
-
 
 	return router;
 }	

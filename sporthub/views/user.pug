@@ -1,4 +1,11 @@
 each user in users
-  div.row(onClick='selectUser(' + user.id + ')', style='cursor:pointer')  
+  div.row(onClick='selectUser(' + user.id + ')', style='cursor:pointer')
+    div.item(style='width:80px; flex-grow:0;padding-top:15px; padding-right:30px;')
+      if user.twitter_profile
+        .figure
+          img(src=user.twitter_profile.profile_image_url_bigger)
+      else
+        i(class="fa fa-user",aria-hidden="true")  
     div.item 
       div #{user.firstname} #{user.lastname} 
+    div.item &nbsp;  

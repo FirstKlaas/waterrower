@@ -215,3 +215,9 @@ H2 {
 	padding: 30px 10px;
 }
 
+.figure{
+    width:73px;
+    height:73px;
+    border-radius:50%;
+    overflow:hidden;
+}

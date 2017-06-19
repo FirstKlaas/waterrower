@@ -98,6 +98,13 @@ app.get('/sessions.html', function (req, res) {
     .catch(err => res.status(500).send({'err':err}));
 });
 
+app.get('/usersessions/:id', function (req, res) {
+    backend.getUserSessions(req.params.id)
+    .then(sessions => res.render('sessions', { 'sessions': sessions}))
+    .catch(err => res.status(500).send({'err':err}));
+});
+
+
 app.get('/devices.html', function (req, res) {
     backend.getDevices()
     .then(devices => res.render('device', { 'devices': devices}))

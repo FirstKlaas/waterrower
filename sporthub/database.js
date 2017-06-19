@@ -60,21 +60,35 @@ class Backend {
 		return new Promise((resolve, reject) => {
 			let users = []; 
 			let self = this;
+			let promises = [];
 
 			this.db.each("SELECT * FROM user",
 				function(err, row) {
 					if (err) return reject(err);
 					if (row.twitter) {
-						self.twitter.getUserInfo(row.twitter)
-						.then( data => {
-							if (data) row.twitter_profile = data;
-						})
+						promises.push(self.twitter.getUserInfo(row.twitter));
 					}
 					users.push(row);
 				},
 				function(err,count) {
 					if (err) return reject(err);
-					resolve(users);	
+					if (promises.length != 0) {
+						Promise.all(promises)
+						.then(values => {
+							values.forEach(value => {
+								let sn = value.screen_name;
+								let index = users.findIndex(user => {
+									return user.twitter == sn;
+								});
+								if (index >= 0) users[index].twitter_profile = value;
+							})
+							resolve(users);
+						});
+						
+					} else {
+						resolve(users);
+					}
+						
 				}	
 	        );
 		});

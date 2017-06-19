@@ -73,7 +73,6 @@ function findUser(id, userarr) {
 
 function showSessions() {
 	$.getJSON( "/rest/user", data => {
-		console.log(findUser(1,data.user));
 		$('#content').load('/sessions.html',
 			function() {
 				$("div[userid]").each( function(index) {

@@ -13,10 +13,17 @@
     "url": "https://github.com/FirstKlaas/waterrower.git"
   },
   "dependencies": {
+    "bcrypt-nodejs": "0.0.3",
+    "connect-flash": "^0.1.1",
     "events": "^1.1.1",
     "express": "^4.14.0",
+    "express-session": "^1.15.3",
     "mqtt": "^2.0.1",
     "numeral": "^2.0.6",
+    "passport": "^0.3.2",
+    "passport-google-oauth": "^1.0.0",
+    "passport-local": "^1.0.0",
+    "passport-twitter": "^1.0.4",
     "pug": "^2.0.0-rc.1",
     "socket.io": "^2.0.3",
     "sqlite3": "^3.1.4",

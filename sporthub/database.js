@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS "device" (
     active    INTEGER NOT NULL DEFAULT 0
 );`;
 
+const bcrypt = require('bcrypt-nodejs')
+
 var exports = module.exports = (db,twitter) => {
 
 	db.serialize(function() {
@@ -95,8 +97,9 @@ class Backend {
 	}
 
 	getUser(id) {
+		let self = this;
 		return new Promise((resolve,reject) => {
-		    this.db.get("SELECT * FROM user WHERE id=?", [id], (err, row) => {
+		    self.db.get("SELECT * FROM user WHERE id=?", [id], (err, row) => {
 				if (err) return reject(err);
 				if (row.twitter) {
 					this.twitter.getUserInfo(row.twitter)
@@ -110,6 +113,84 @@ class Backend {
 	            }
 	    	});
 		});
+	}
+
+	addNewUser(login, password, firstname='', lastname= '') {
+		let self = this;
+		return new Promise((resolve, reject) => {
+			if (!login) return reject(new Error('No login'));
+			if (!password) return reject(new Error('No password'));
+
+			self.getUserByLogin(login, false)
+				.then( user => {
+					if ( user ) return reject(new Error('User already exists'));
+					bcrypt.hash(password, null, null, function(err, hash) {
+						if(err) return reject(err);
+						self.db.run('INSERT INTO user(login,password,firstname, lastname) VALUES (?,?,?,?)', [login,hash,firstname,lastname], function(err) {
+							if (err) return reject(err);
+							resolve(this.lastID);
+						})	
+					});		
+					
+				})
+				.catch(err => reject(err));
+		})
+	}
+
+	getUserByLogin(login, loadtwitter=true) {
+		let self = this;
+		return new Promise((resolve,reject) => {
+			if ( !login ) return reject(new Error('No login'));
+		    self.db.get("SELECT * FROM user WHERE login=?", [login], function(err, row) {
+				if (err) return reject(err);
+				if ( !row ) return resolve(null);
+
+				if (loadtwitter) {
+					if (row.twitter) {
+						this.twitter.getUserInfo(row.twitter)
+						.then( data => {
+							if (!data) return resolve(row); 
+							row.twitter_profile = data;
+							return resolve(row);
+						})
+					} else {
+		            	resolve(row);
+		            }
+				} else {
+	            	resolve(row);
+	            }
+	    	});
+		});
+	}
+
+
+	validatePassword(login, password) {
+		let self = this;
+		return new Promise((resolve,reject) => {
+			if ( !login ) return reject(new Error('No login to validate against'));
+			if ( !password ) return reject(new Error('No password to validate'));
+			
+			self.getUserByLogin(login,false)
+				.then((user) => {
+					if (!user) return resolve(null);
+					let result = bcrypt.compareSync(password, user.password);
+					resolve(result ? user : null);	
+				})
+				.catch((err) => reject(err));
+		})
+	}
+
+	updatePassword(password, userid) {
+		let self = this;
+		return new Promise((resolve,reject) => {
+			bcrypt.hash(password, null, null, function(err, hash) {
+    			if (err) return reject(err);
+    			self.db.run('UPDATE user SET password=? WHERE id=?',[hash,userid], (err) => {
+    				if (err) return reject(err);
+    				resolve(hash);	
+    			})
+			});
+		})
 	}
 
 	getSessions() {

@@ -16,6 +16,16 @@ var exports = module.exports = (app) => {
 	    .catch(err => res.status(500).json({"err":err}));
 	});
 
+	router.get('/user/:userid', function (req, res) {
+	    backend.getUserSessions(req.params.userid)
+	    .then(data => {
+	    	data.forEach( session => {
+	    	});
+	    	res.json({"sessions":data})
+	    })
+	    .catch(err => res.status(500).json({"err":err}));
+	});
+
 	router.get('/delete/:id', function (req, res) {
 	    backend.deleteSession(req.params.id)
 	    .then(() => res.json({"sessionid":req.params.id}))

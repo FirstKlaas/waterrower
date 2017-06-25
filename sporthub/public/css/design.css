@@ -49,6 +49,16 @@ BODY {
 	flex-direction: column;
 }
 
+#profileimage {
+	display: flex;
+	flex: 0 0 200px;
+	width: 200px
+	height: 200px;	
+    border-radius:50%;
+    overflow:hidden;
+    margin-right: 1.3em;
+}
+
 H1 {
 	font-size: 1.0em;
 	margin: 0px;
@@ -175,6 +185,11 @@ H2 {
 	text-align: left;
 }
 
+.item a {
+	text-decoration: none;
+	color: inherit;
+}
+
 .small {
 	color: #999999;
 	font-size: 0.5em;
@@ -220,4 +235,13 @@ H2 {
     height:73px;
     border-radius:50%;
     overflow:hidden;
+}
+
+INPUT {
+	font-size: 0.8em;
+	width: 95%;
+}
+
+BUTTON {
+	font-size: 1.2em;
 }

@@ -1,0 +1,18 @@
+html
+  head
+    title Waterrower - Login
+    include include/head.pug
+  body
+    form(action="/signup", method="post")
+      div
+        i(class="fa fa-telegram",aria-hidden="true")
+        div Signup   
+      .form-group
+        label Login
+        input(type="text", class="form-control", name="login")
+      .form-group
+        label Password
+        input(type="password", class="form-control", name="password")
+      button(type="submit", class="btn btn-warning btn-lg") Login
+    p Want to login?
+      a(href="/") Login

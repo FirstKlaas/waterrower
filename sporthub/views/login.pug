@@ -1,0 +1,35 @@
+html
+  head
+    title Waterrower - Login
+    include include/head.pug
+  body
+    .header
+      .icon
+        i(class="fa fa-telegram",aria-hidden="true")
+      .title
+        h1 Login
+    form(action="/login", method="post")
+      .row(style='padding-bottom:0em')
+        .item Account
+      .row  
+        .item 
+          input(type="text", 
+                class="form-control", 
+                name="login", 
+                placeholder="Enter your account name", 
+                inputmode='verbatim')
+      .row(style='padding-bottom:0em')
+        .item Password
+      .row
+        .item 
+          input(type="password", 
+                class="form-control", 
+                name="password", 
+                placeholder="Enter your password",
+                inputmode='verbatim')
+      .row
+        .item
+          button(type="submit", class="btn btn-warning btn-lg") Login
+      .row
+        .item.small Need an account? 
+          a(href="/signup") Signup

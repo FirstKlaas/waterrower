@@ -4,7 +4,7 @@ const server = require('http').createServer(app);
 const io = require('socket.io').listen(server);
 const configuration = require('./config.json');
 const sqlite3 = require('sqlite3').verbose();
-
+const debug = require('debug')('http')
 var passport = require('passport');
 var flash    = require('connect-flash');
 var cookieParser = require('cookie-parser');
@@ -25,7 +25,7 @@ var twitter_client = new Twitter({
 
 var twitter_util = require('./twitter-util.js')(twitter_client);
 
-console.log('We are in ' + app.get('env') + ' mode');
+ debug('We are in ' + app.get('env') + ' mode');
 
 var db = new sqlite3.Database(conf.database);
 
@@ -185,7 +185,7 @@ backend.stopActiveSessions().then(values => {
     server.listen(conf.port);
 
     // Portnummer in die Konsole schreiben
-    console.log('Der Server läuft nun unter http://127.0.0.1:' + conf.port + '/');    
+    debug('Der Server läuft nun unter http://127.0.0.1:' + conf.port + '/');    
 });
 
 function isLoggedIn(req, res, next) {

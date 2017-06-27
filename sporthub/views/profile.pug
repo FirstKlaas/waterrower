@@ -1,0 +1,38 @@
+html
+  head
+    title Waterrower - Profile
+    include include/head.pug
+  body
+    include include/header.pug
+    #content
+      form(action="/profile", method="post")
+        .row  
+          .item 
+            .label Vorname
+            input(type="text", 
+                  class="form-control", 
+                  name="firstname", 
+                  placeholder="First Name", 
+                  inputmode='verbatim',
+                  value=user.firstname)
+        .row
+          .item 
+            .label Nachname
+            input(type="text", 
+                  class="form-control", 
+                  name="lastname", 
+                  placeholder="Last Name",
+                  inputmode='verbatim',
+                  value=user.lastname)
+        .row
+          .item 
+            .label Twitter Account
+            input(type="text", 
+                  class="form-control", 
+                  name="twitter", 
+                  placeholder="Twitter Name",
+                  inputmode='verbatim',
+                  value=user.twitter)
+        .row
+          .item
+            button(type="submit", class="btn btn-warning btn-lg") Update

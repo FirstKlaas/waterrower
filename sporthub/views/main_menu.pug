@@ -1,11 +1,13 @@
 div.row(onClick='showHallOfFame()')  
-  .item 
+  .item.bullet 
     i(class="fa fa-trophy",aria-hidden="true")
-    span &nbsp;Bestenliste
+  .item Bestenliste
+  .item &nbsp;
 div.row(onClick='showUser()')  
-  .item
+  .item.bullet
     i(class="fa fa-user",aria-hidden="true") 
-    span &nbsp;Sportler
+  .item Sportler
+  .item &nbsp;
 div.row(onClick='showDevices()')  
   .item
     i(class="fa fa-rocket",aria-hidden="true")
@@ -18,6 +20,11 @@ div.row(onClick='showSessions()')
   .item
     i(class="fa fa-history",aria-hidden="true")
     span &nbsp;Workouts
+div.row
+  .item
+    a(href="/profile") 
+      i(class="fa fa-user",aria-hidden="true")
+      span &nbsp;Profile
 div.row
   .item
     a(href="/logout") 

@@ -4,7 +4,7 @@ const server = require('http').createServer(app);
 const io = require('socket.io').listen(server);
 const configuration = require('./config.json');
 const sqlite3 = require('sqlite3').verbose();
-const debug = require('debug')('http')
+const debug = require('debug')('waterrower:http')
 var passport = require('passport');
 var flash    = require('connect-flash');
 var cookieParser = require('cookie-parser');
@@ -25,7 +25,7 @@ var twitter_client = new Twitter({
 
 var twitter_util = require('./twitter-util.js')(twitter_client);
 
- debug('We are in ' + app.get('env') + ' mode');
+debug('We are in ' + app.get('env') + ' mode');
 
 var db = new sqlite3.Database(conf.database);
 
@@ -37,18 +37,21 @@ const passportConfig = require('./config/passport.js')(passport,backend);
 app.use(express.static(conf.static_dir));
 app.set('view engine', 'pug');
 app.use(cookieParser()); // read cookies (needed for auth)
-app.use(bodyParser.urlencoded({
-  extended: true
-}));app.use(bodyParser.json());
+
+app.use(bodyParser.urlencoded({extended: true}));
+
+app.use(bodyParser.json());
+
 app.use(session({
     secret: 'waterrowerwaterrowerwaterrower',
     resave: true,
     saveUninitialized: true 
 })); // session secret
+
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
-app.use(flash()); // use connect-flash for flash messages stored in session
 
+app.use(flash()); // use connect-flash for flash messages stored in session
 
 const waterrower = require('./waterrower.js')(conf.mqttserver);
 app.set('backend',backend);
@@ -63,7 +66,7 @@ waterrower.on('data', function (sender, data) {
 });
 
 waterrower.on('device-connected', function(sender, payload) {
-    console.log("Device registered.");
+    debug("External evice registered. Checking, if device exists in database.");
 });
 
 waterrower.on('session-start', function(sender, id) {
@@ -97,7 +100,6 @@ app.get('/', (req,res) => {
     res.render('login', {message: req.flash('loginMessage')});
 })
 
-
 app.get('/logout', isLoggedIn, (req,res) => {
     req.logout();
     res.redirect('/');
@@ -107,19 +109,42 @@ app.get('/signup', (req,res) => {
     res.render('signup', {});
 })
 
+app.get('/profile', isLoggedIn, (req,res) => {
+    res.render('profile', {user:req.user});
+})
+
+app.post('/profile', isLoggedIn, (req, res) => {
+    let data = {};
+    data.id        = req.user.id;
+    data.twitter   = req.body.twitter;
+    data.firstname = req.body.firstname;
+    data.lastname  = req.body.lastname;
+    debug("New User Data: %O", data);
+    backend.updateUser(data)
+    .then(user => {
+        req.user = user;
+        res.redirect("/main.html");    
+    })
+    .catch( err => {
+        debug(err);
+        res.redirect('/');
+    })
+    
+})
+
 // wenn der Pfad / aufgerufen wird
 app.get('/main.html', isLoggedIn, function (req, res) {
     res.render('index', {user:req.user});
 });
 
 app.post('/login', passport.authenticate('local-login', {
-    successRedirect : '/main.html', // redirect to the secure profile section
+    successRedirect : '/main.html', 
     failureRedirect : '/', // redirect back to the signup page if there is an error
     failureFlash : true // allow flash messages
 }))
 
 app.post('/signup', passport.authenticate('local-signup', {
-    successRedirect : '/main.html', // redirect to the secure profile section
+    successRedirect : '/profile', // redirect to the secure profile section
     failureRedirect : '/signup', // redirect back to the signup page if there is an error
     failureFlash : true // allow flash messages
 }));
@@ -185,7 +210,7 @@ backend.stopActiveSessions().then(values => {
     server.listen(conf.port);
 
     // Portnummer in die Konsole schreiben
-    debug('Der Server läuft nun unter http://127.0.0.1:' + conf.port + '/');    
+    debug('Der Server läuft nun auf port %d', conf.port);    
 });
 
 function isLoggedIn(req, res, next) {

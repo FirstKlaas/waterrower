@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS "device" (
 );`;
 
 const bcrypt = require('bcrypt-nodejs')
+const debug = require('debug')('waterrower:database')
 
 var exports = module.exports = (db,twitter) => {
 
@@ -96,12 +97,12 @@ class Backend {
 		});
 	}
 
-	getUser(id) {
+	getUser(id,twitter=true) {
 		let self = this;
 		return new Promise((resolve,reject) => {
 		    self.db.get("SELECT * FROM user WHERE id=?", [id], (err, row) => {
 				if (err) return reject(err);
-				if (row.twitter) {
+				if (twitter && row.twitter) {
 					this.twitter.getUserInfo(row.twitter)
 					.then( data => {
 						if (!data) return resolve(row); 
@@ -113,6 +114,29 @@ class Backend {
 	            }
 	    	});
 		});
+	}
+
+	updateUser(userdata) {
+		let self = this;
+		return new Promise((resolve,reject) => {
+			if (!userdata || !userdata.id) return reject(new Error('No valid userdata'));
+			this.getUser(userdata.id, false)
+			.then( user => {
+				if (!user) return reject(new Error('Not a valid user.'));
+				user.firstname  = userdata.firstname;
+				user.lastname   = userdata.lastname;
+				user.twitter    = userdata.twitter;
+				debug("Updating %s %s (Twitter: %s) [%d]", user.firstname, user.lastname, user.twitter, user.id)
+				self.db.run('UPDATE user SET firstname=?, lastname=?, twitter=? WHERE id=?', 
+					[user.firstname,user.lastname,user.twitter,user.id], 
+					function(err) {
+						if (err) return reject(new Error(err.message));
+						resolve(user);
+					}
+				)
+			})
+			.catch( err => reject(err));
+		})
 	}
 
 	addNewUser(login, password, firstname='', lastname= '') {

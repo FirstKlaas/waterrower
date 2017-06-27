@@ -239,9 +239,29 @@ H2 {
 
 INPUT {
 	font-size: 0.8em;
-	width: 95%;
+	width: 100%;
+	border-radius: 25px;
+	border: 2px solid #007aff;
+	padding: 25px;
 }
 
 BUTTON {
-	font-size: 1.2em;
+	font-size: 0.8em;
+	background-color: #007aff;
+	border-radius: 25px;
+	color: white;
+	width: 100%;
+	border: None;
+	padding: 25px;
+}
+
+.label {
+	font-size: 0.6em;
+	color: #666;
+}
+
+.bullet {
+	flex-grow: 0;
+	padding-right: 0.3em;
+	width: 1em;
 }

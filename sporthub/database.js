@@ -5,7 +5,8 @@ var ddl_user = `CREATE TABLE IF NOT EXISTS "user" (
     firstname  TEXT NOT NULL,
     lastname   TEXT NOT NULL,
     session_id INTEGER,
-    twitter    TEXT
+    twitter    TEXT,
+    isadmin    INTEGER NOT NULL DEFAULT 0
 );`;
 
 var ddl_session_entry = `CREATE TABLE IF NOT EXISTS "session_entry" (

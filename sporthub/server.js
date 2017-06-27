@@ -4,12 +4,14 @@ const server        = require('http').createServer(app);
 const io            = require('socket.io').listen(server);
 const configuration = require('./config.json');
 const sqlite3       = require('sqlite3').verbose();
-const debug         = require('debug')('waterrower:http')
+const logDebug      = require('debug')('waterrower:server:debug')
+const logError      = require('debug')('waterrower:server:error')
 var passport        = require('passport');
 var flash           = require('connect-flash');
 var cookieParser    = require('cookie-parser');
 var bodyParser      = require('body-parser');
 var session         = require('express-session');
+const FileStore     = require('session-file-store')(session);
 var Twitter         = require('twitter');
 
 var conf            = configuration[app.get('env')];
@@ -25,7 +27,7 @@ var twitter_client = new Twitter({
 
 var twitter_util = require('./twitter-util.js')(twitter_client);
 
-debug('We are in ' + app.get('env') + ' mode');
+logDebug('We are in ' + app.get('env') + ' mode');
 
 var db = new sqlite3.Database(conf.database);
 
@@ -42,11 +44,23 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(bodyParser.json());
 
+let session_config = {
+    cookie : 'waterrower.sid',
+    secret : 'secret',
+    store  : new FileStore({path:"sessions"}) 
+}
+
+/**
+    store: session_config.store,
+**/
 app.use(session({
-    secret: 'waterrowerwaterrowerwaterrower',
+    key: session_config.cookie,
+    secret: session_config.secret,
     resave: true,
     saveUninitialized: true 
 })); // session secret
+
+logDebug(session_config.secret);
 
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
@@ -66,7 +80,7 @@ waterrower.on('data', function (sender, data) {
 });
 
 waterrower.on('device-connected', function(sender, payload) {
-    debug("External evice registered. Checking, if device exists in database.");
+    logDebug("External evice registered. Checking, if device exists in database.");
 });
 
 waterrower.on('session-start', function(sender, id) {
@@ -119,14 +133,14 @@ app.post('/profile', isLoggedIn, (req, res) => {
     data.twitter   = req.body.twitter;
     data.firstname = req.body.firstname;
     data.lastname  = req.body.lastname;
-    debug("New User Data: %O", data);
+    logDebug("New User Data: %O", data);
     backend.updateUser(data)
     .then(user => {
         req.user = user;
         res.redirect("/main");    
     })
     .catch( err => {
-        debug(err);
+        logError(err);
         res.redirect('/');
     })
     
@@ -134,7 +148,12 @@ app.post('/profile', isLoggedIn, (req, res) => {
 
 // wenn der Pfad / aufgerufen wird
 app.get('/main', isLoggedIn, function (req, res) {
-    res.render('index', {user:req.user});
+    logDebug('/main: Session %O',  req.session.passport); 
+    if (req.user) { 
+        res.render('index', {user:req.user});
+    } else {
+        res.redirect('/');
+    }
 });
 
 app.post('/login', passport.authenticate('local-login', {
@@ -210,15 +229,16 @@ backend.stopActiveSessions().then(values => {
     server.listen(conf.port);
 
     // Portnummer in die Konsole schreiben
-    debug('Der Server läuft nun auf port %d', conf.port);    
+    logDebug('Der Server läuft nun auf port %d', conf.port);    
 });
 
 function isLoggedIn(req, res, next) {
-
     // if user is authenticated in the session, carry on 
     if (req.isAuthenticated())
+        logDebug('User is authentificated %O',req.user);
         return next();
 
     // if they aren't redirect them to the home page
+    logDebug('User is not authentificated');
     res.redirect('/');
 }

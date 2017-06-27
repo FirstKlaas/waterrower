@@ -1,12 +1,12 @@
 .header
   .icon(onClick='showMainMenu()')
     i(class="fa fa-BARS",aria-hidden="true")
-  if (user.twitter_profile)
+  if (user && user.twitter_profile)
     a(hfref="/profile")
       img#profileimage(src=user.twitter_profile.profile_image_url_https_200)
   else
     a(hfref="/profile")
-      img#profileimage(src='/img/aang.png')
+       img#profileimage(src='/img/aang.png')
   .title
     h1#current-user #{user.firstname}
     h2#current-device Kein Gerät ausgewählt

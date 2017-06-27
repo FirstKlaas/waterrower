@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS "device" (
 );`;
 
 const bcrypt = require('bcrypt-nodejs')
-const debug = require('debug')('waterrower:database')
+const logDebug = require('debug')('waterrower:database:debug')
+const logError = require('debug')('waterrower:database:error')
 
 var exports = module.exports = (db,twitter) => {
 
@@ -109,11 +110,17 @@ class Backend {
 						row.twitter_profile = data;
 						return resolve(row);
 					})
+					.catch(err => {
+						logError("Could not retrieve Twitter Profile Data");
+						logError("%O",err);
+						return resolve(row)
+					})
 				} else {
 	            	resolve(row);
 	            }
 	    	});
 		});
+		return resolve(row)
 	}
 
 	updateUser(userdata) {
@@ -126,7 +133,7 @@ class Backend {
 				user.firstname  = userdata.firstname;
 				user.lastname   = userdata.lastname;
 				user.twitter    = userdata.twitter;
-				debug("Updating %s %s (Twitter: %s) [%d]", user.firstname, user.lastname, user.twitter, user.id)
+				logDebug("Updating %s %s (Twitter: %s) [%d]", user.firstname, user.lastname, user.twitter, user.id)
 				self.db.run('UPDATE user SET firstname=?, lastname=?, twitter=? WHERE id=?', 
 					[user.firstname,user.lastname,user.twitter,user.id], 
 					function(err) {

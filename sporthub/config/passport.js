@@ -1,4 +1,6 @@
 var LocalStrategy   = require('passport-local').Strategy;
+const logDebug      = require('debug')('waterrower:passwort:debug')
+const logError      = require('debug')('waterrower:passport:error')
 
 // expose this function to our app using module.exports
 module.exports = function(passport,db) {
@@ -11,13 +13,18 @@ module.exports = function(passport,db) {
 
     // used to serialize the user for the session
     passport.serializeUser(function(user, done) {
+        logDebug("Serializing user %O", user)
         done(null, user.id);
     });
 
     // used to deserialize the user
     passport.deserializeUser((id, done) => {
-        db.getUser(id)
-        	.then(user => done(null,user))
+        logDebug("Deserialize user with id %d", id);
+        db.getUser(id,false)
+        	.then(user => {
+                logDebug("Resulting in user %O", user);
+                done(null,user)
+            })
         	.catch(err => done(err));
     });
 

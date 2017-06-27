@@ -5,7 +5,8 @@
     a(hfref="/profile")
       img#profileimage(src=user.twitter_profile.profile_image_url_https_200)
   else
-    img#profileimage(src='/img/aang.png')
+    a(hfref="/profile")
+      img#profileimage(src='/img/aang.png')
   .title
     h1#current-user #{user.firstname}
     h2#current-device Kein Gerät ausgewählt

@@ -9,25 +9,32 @@ div.row(onClick='showUser()')
   .item Sportler
   .item &nbsp;
 div.row(onClick='showDevices()')  
-  .item
+  .item.bullet
     i(class="fa fa-rocket",aria-hidden="true")
-    span &nbsp;Gerät
+  .item Gerät
+  .item &nbsp;
 div.row(onClick='showLive()')
-  .item
+  .item.bullet
     i(class="fa fa-heartbeat",aria-hidden="true")
-    span &nbsp;Live
+  .item Live
+  .item &nbsp;
 div.row(onClick='showSessions()')
-  .item
+  .item.bullet
     i(class="fa fa-history",aria-hidden="true")
-    span &nbsp;Workouts
+  .item Workouts
+  .item &nbsp;
 div.row
-  .item
+  .item.bullet
     a(href="/profile") 
       i(class="fa fa-user",aria-hidden="true")
-      span &nbsp;Profile
+  .item 
+    a(href="/profile") Profile
+  .item &nbsp;
 div.row
-  .item
+  .item.bullet
     a(href="/logout") 
-      i(class="fa fa-power-off",aria-hidden="true")
-      span &nbsp;Logout
+      i(class="fa fa-power-off",aria-hidden="true")  
+  .item
+    a(href="/logout") Logout
+  .item &nbsp;
 

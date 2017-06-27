@@ -1,20 +1,20 @@
-const express = require('express');
-const app = express();
-const server = require('http').createServer(app);
-const io = require('socket.io').listen(server);
+const express       = require('express');
+const app           = express();
+const server        = require('http').createServer(app);
+const io            = require('socket.io').listen(server);
 const configuration = require('./config.json');
-const sqlite3 = require('sqlite3').verbose();
-const debug = require('debug')('waterrower:http')
-var passport = require('passport');
-var flash    = require('connect-flash');
-var cookieParser = require('cookie-parser');
-var bodyParser   = require('body-parser');
-var session      = require('express-session');
+const sqlite3       = require('sqlite3').verbose();
+const debug         = require('debug')('waterrower:http')
+var passport        = require('passport');
+var flash           = require('connect-flash');
+var cookieParser    = require('cookie-parser');
+var bodyParser      = require('body-parser');
+var session         = require('express-session');
+var Twitter         = require('twitter');
 
-var conf = configuration[app.get('env')];
-var twitter_conf = require('./twitter.json');
+var conf            = configuration[app.get('env')];
+var twitter_conf    = require('./twitter.json');
 
-var Twitter = require('twitter');
 
 var twitter_client = new Twitter({
   consumer_key: twitter_conf.consumer_key,
@@ -123,7 +123,7 @@ app.post('/profile', isLoggedIn, (req, res) => {
     backend.updateUser(data)
     .then(user => {
         req.user = user;
-        res.redirect("/main.html");    
+        res.redirect("/main");    
     })
     .catch( err => {
         debug(err);
@@ -133,12 +133,12 @@ app.post('/profile', isLoggedIn, (req, res) => {
 })
 
 // wenn der Pfad / aufgerufen wird
-app.get('/main.html', isLoggedIn, function (req, res) {
+app.get('/main', isLoggedIn, function (req, res) {
     res.render('index', {user:req.user});
 });
 
 app.post('/login', passport.authenticate('local-login', {
-    successRedirect : '/main.html', 
+    successRedirect : '/main', 
     failureRedirect : '/', // redirect back to the signup page if there is an error
     failureFlash : true // allow flash messages
 }))

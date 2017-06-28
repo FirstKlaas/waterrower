@@ -369,6 +369,20 @@ class Backend {
 		})
 	}
 
+	getDeviceByAdress(addr) {
+		return new Promise((resolve,reject) => {			
+			this.db.get("SELECT * FROM device WHERE mac=?", [addr], 
+				function(err,row) {
+					if (err) { 
+						reject(err);
+					} else {
+						resolve(row);
+					}
+				}
+			)
+		})
+	}
+
 	getDevices() {
 		return new Promise((resolve, reject) => {
 			this.db.all("SELECT * FROM device ORDER BY human", 

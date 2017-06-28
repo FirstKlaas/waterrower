@@ -80,7 +80,8 @@ waterrower.on('data', function (sender, data) {
 });
 
 waterrower.on('device-connected', function(sender, payload) {
-    logDebug("External evice registered. Checking, if device exists in database.");
+    logDebug("External device registered. Checking, if device exists in database.");
+    
 });
 
 waterrower.on('session-start', function(sender, id) {

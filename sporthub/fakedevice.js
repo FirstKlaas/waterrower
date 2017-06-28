@@ -9,7 +9,30 @@
 *
 ***********************************************/
 
-const util = require('./mqtt-device-util.js')
+const mqtt          = require('mqtt');
+const EventEmitter  = require('events');
 
-console.log(util.byteToHexString(util.STOP_SESSION_CMD));
+const configuration = require('./config.json');
+const conf          = configuration['development'];
+const mqttutil      = require('./mqtt-device-util.js')
+
+const mqtt          = mqtt.connect('mqtt://' + conf.mqttserver);
+
+const clientdID     = "00:00:00:00:00:00";
+
+mqtt.on('connect', function() {
+    mqtt.subscribe('sportshub/#')
+});
+
+
+/********************************************
+* Listen to Commands
+*********************************************/
+mqtt.subscribe(clientdID + '/#');
+
+/********************************************
+* Connect to the Sportshub Server on Startup
+*********************************************/
+mqtt.publish("sportshub/device/connect", clientdID);
+
 

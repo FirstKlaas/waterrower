@@ -80,11 +80,15 @@ waterrower.on('data', function (sender, data) {
 });
 
 waterrower.on('device-connected', function(sender, mac) {
-    backend.getDeviceByMacAddress(mac).then( device ) {
-        //TODO
-    }
     logDebug("External device registered. Checking, if device exists in database.");
-    
+    backend.getDeviceByMacAddress(mac).then( device => {
+        if (device) {
+            logDebug("Device %o already registered. Welcome back",device);
+        } else {
+            logDebug("New device %s. Try to register.", mac);
+            backend.addNewDevice(mac).then(device => logDebug("New registered device is %j",device));
+        }
+    }).catch(err => logError("%O",err));    
 });
 
 waterrower.on('session-start', function(sender, id) {
@@ -201,14 +205,30 @@ app.get('/usersessions/:id', isLoggedIn, function (req, res) {
 
 app.get('/devices.html', isLoggedIn, function (req, res) {
     backend.getDevices()
-    .then(devices => res.render('device', { 'devices': devices}))
+    .then(devices => res.render('device', { 'devices': devices, 'user':req.user}))
     .catch(err => res.status(500).send({'err':err}));
 })
 
 app.get('/device/:id', isLoggedIn, function (req, res) {
-    backend.getDevice()
-    .then(device => res.render('device', { 'devices': [device]}))
+    backend.getDevice(req.params.id)
+    .then(device => res.render('device', { 'devices': device,'user':req.user}))
     .catch(err => res.status(500).send({'err':err}));
+})
+
+app.get("/editdevice/:id", isLoggedIn, (req,res) => {
+    backend.getDevice(req.params.id)
+    .then(device => {
+        if (device) {
+            res.render('editdevice', { 'device': device,'user':req.user});
+        } else {
+            res.status(404).send({'msg':'Device not available.'});
+        }
+    })
+})
+
+app.post("/editdevice", isLoggedIn, (req,res) => {
+    logDebug("Trying to change device information. New human readable name %s", req.body.human);
+    res.redirect("/main");
 })
 
 const halloffame_router = require('./routes/hall-of-fame.js')(app);

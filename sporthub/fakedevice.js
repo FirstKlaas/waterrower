@@ -16,23 +16,28 @@ const configuration = require('./config.json');
 const conf          = configuration['development'];
 const mqttutil      = require('./mqtt-device-util.js')
 
-const mqtt          = mqtt.connect('mqtt://' + conf.mqttserver);
+const logDebug      = require('debug')('fakedevice:debug');
 
-const clientdID     = "00:00:00:00:00:00";
+logDebug('Connecting to ' + conf.mqttserver);
+const mqttclient    = mqtt.connect('mqtt://' + conf.mqttserver);
 
-mqtt.on('connect', function() {
-    mqtt.subscribe('sportshub/#')
+const clientID     = "00:00:00:00:00:00";
+
+mqttclient.on('connect', function() {
+	logDebug('Connected');
+    mqttclient.subscribe('sportshub/#')
 });
 
 
 /********************************************
 * Listen to Commands
 *********************************************/
-mqtt.subscribe(clientdID + '/#');
+mqttclient.subscribe(clientID + '/#');
 
 /********************************************
 * Connect to the Sportshub Server on Startup
 *********************************************/
-mqtt.publish("sportshub/device/connect", clientdID);
+logDebug('Sending connect command for clientID ' + clientID)
+mqttclient.publish("sportshub/device/connect", clientID);
 
 

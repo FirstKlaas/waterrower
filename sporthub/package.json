@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=development DEBUG=waterrower:* node server.js",
-    "test": "cross-env NODE_ENV=production node server.js"
+    "test": "cross-env NODE_ENV=production node server.js",
+    "fake": "cross-env NODE_ENV=development DEBUG=waterrower:* node fakedevice.js"
   },
   "author": "Klaas Nebuhr",
   "license": "ISC",

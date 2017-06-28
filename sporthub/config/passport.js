@@ -13,16 +13,15 @@ module.exports = function(passport,db) {
 
     // used to serialize the user for the session
     passport.serializeUser(function(user, done) {
-        logDebug("Serializing user %O", user)
+        //logDebug("Serializing user %O", user)
         done(null, user.id);
     });
 
     // used to deserialize the user
     passport.deserializeUser((id, done) => {
-        logDebug("Deserialize user with id %d", id);
+        //logDebug("Deserialize user with id %d", id);
         db.getUser(id,false)
         	.then(user => {
-                logDebug("Resulting in user %O", user);
                 done(null,user)
             })
         	.catch(err => done(err));
@@ -35,7 +34,6 @@ module.exports = function(passport,db) {
     // by default, if there was no name, it would just be called 'local'
 
     passport.use('local-signup', new LocalStrategy({
-        // by default, local strategy uses username and password, we will override with email
         usernameField : 'login',
         passwordField : 'password',
         passReqToCallback : true // allows us to pass back the entire request to the callback
@@ -72,7 +70,6 @@ module.exports = function(passport,db) {
     // by default, if there was no name, it would just be called 'local'
 
     passport.use('local-login', new LocalStrategy({
-        // by default, local strategy uses username and password, we will override with email
         usernameField : 'login',
         passwordField : 'password',
         passReqToCallback : true // allows us to pass back the entire request to the callback

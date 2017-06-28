@@ -369,7 +369,7 @@ class Backend {
 		})
 	}
 
-	getDeviceByAdress(addr) {
+	getDeviceByMacAddress(addr) {
 		return new Promise((resolve,reject) => {			
 			this.db.get("SELECT * FROM device WHERE mac=?", [addr], 
 				function(err,row) {

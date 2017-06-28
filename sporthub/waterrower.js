@@ -32,7 +32,8 @@ class Waterrower extends EventEmitter {
 			if (topic === 'sportshub/data') {
     		    self.emit('data', self, getWaterrowerDataObj(message));
     		} else if (topic === 'sportshub/device/connect') {
-    			self.emit('device-connected', self, payload);
+                // Payload ist die MAC Adresse des Device als Sring.
+    			self.emit('device-connected', self, mac);
     		}
 		});
         

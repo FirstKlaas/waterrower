@@ -79,7 +79,10 @@ waterrower.on('data', function (sender, data) {
     io.emit('message', data);
 });
 
-waterrower.on('device-connected', function(sender, payload) {
+waterrower.on('device-connected', function(sender, mac) {
+    backend.getDeviceByMacAddress(mac).then( device ) {
+        //TODO
+    }
     logDebug("External device registered. Checking, if device exists in database.");
     
 });

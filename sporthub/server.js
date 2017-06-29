@@ -132,7 +132,13 @@ app.get('/signup', (req,res) => {
 })
 
 app.get('/profile', isLoggedIn, (req,res) => {
-    res.render('profile', {user:req.user});
+    logDebug("Profile anzeigen");
+    if (req.user) {
+        res.render('profile', {user:req.user});
+    } else {
+        logError("No user object althoug authentificated. Weired.");
+        res.redirect('/');
+    }
 })
 
 app.post('/profile', isLoggedIn, (req, res) => {
@@ -141,7 +147,7 @@ app.post('/profile', isLoggedIn, (req, res) => {
     data.twitter   = req.body.twitter;
     data.firstname = req.body.firstname;
     data.lastname  = req.body.lastname;
-    logDebug("New User Data: %O", data);
+    logDebug("Userprofile Changed. New Values: %O", data);
     backend.updateUser(data)
     .then(user => {
         req.user = user;
@@ -259,7 +265,6 @@ backend.stopActiveSessions().then(values => {
 function isLoggedIn(req, res, next) {
     // if user is authenticated in the session, carry on 
     if (req.isAuthenticated())
-        logDebug('User is authentificated %O',req.user);
         return next();
 
     // if they aren't redirect them to the home page

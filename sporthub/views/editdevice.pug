@@ -1,0 +1,30 @@
+html
+  head
+    title Waterrower - Edit Device
+    include include/head.pug
+  body
+    include include/header.pug
+    #content
+      form(action="/editdevice", method="post")
+        .row  
+          .item 
+            .label Screen Name
+            input(type="text", 
+                  class="form-control", 
+                  name="human", 
+                  placeholder="Human readable name", 
+                  inputmode='verbatim',
+                  value=device.human)
+        .row
+          .item 
+            .label MAC Address
+            input(type="text", 
+                  class="form-control", 
+                  name="mac", 
+                  placeholder="MAC Addres",
+                  inputmode='verbatim',
+                  disabled='disabled',
+                  value=device.mac)
+        .row
+          .item
+            button(type="submit", class="btn btn-warning btn-lg") Update

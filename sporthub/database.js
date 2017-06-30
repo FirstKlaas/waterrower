@@ -176,7 +176,6 @@ class Backend {
 		    self.db.get("SELECT * FROM user WHERE login=?", [login], function(err, row) {
 				if (err) return reject(err);
 				if ( !row ) return resolve(null);
-
 				if (loadtwitter) {
 					if (row.twitter) {
 						this.twitter.getUserInfo(row.twitter)
@@ -380,6 +379,19 @@ class Backend {
 					}
 				}
 			)
+		})
+	}
+
+	addNewDevice(addr) {
+		return new Promise((resolve,reject) => {
+			this.db.run("INSERT INTO device(mac, human) VALUES (?,?)", [addr,addr], err => {
+				if (err) {
+					logError("Could not insert new device " + addr);
+					logError("%O",err);
+					return reject(new Error("Could add new device " + addr));
+				}
+				resolve (this.changes);
+			})
 		})
 	}
 

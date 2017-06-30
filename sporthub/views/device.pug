@@ -1,6 +1,14 @@
+
 each device in devices
   .row(onclick='selectDevice(' + device.id + ')')
     .item
       div #{device.human}
       div.small #{device.mac}
+    
+    if (user.isadmin == 1)
+      .item
+        a(href='/editdevice/' + device.id)
+          i(class="fa fa-edit",aria-hidden="true")
+    else
+     .item   
 

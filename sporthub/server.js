@@ -3,6 +3,8 @@ const app           = express();
 const server        = require('http').createServer(app);
 const io            = require('socket.io').listen(server);
 const configuration = require('./config.json');
+const conf          = configuration[app.get('env')];
+
 const sqlite3       = require('sqlite3').verbose();
 const logDebug      = require('debug')('waterrower:server:debug')
 const logError      = require('debug')('waterrower:server:error')
@@ -14,7 +16,6 @@ var session         = require('express-session');
 const FileStore     = require('session-file-store')(session);
 var Twitter         = require('twitter');
 
-var conf            = configuration[app.get('env')];
 var twitter_conf    = require('./twitter.json');
 const authUtil      = require('./auth-util.js');
 
@@ -107,11 +108,6 @@ waterrower.on('session-stop', function(sender, sessionid) {
 const rest_user_router    = require('./rest/user.js')(app);
 const rest_session_router = require('./rest/session.js')(app);
 const rest_device_router  = require('./rest/device.js')(app);
-
-app.get('/rest', function(req, res, next) {
-    res.setHeader("Content-Type", conf.json_content_type);
-    next('route');
-});
 
 app.use('/rest/user', rest_user_router);
 app.use('/rest/session', rest_session_router);
@@ -238,6 +234,7 @@ app.post("/editdevice", authUtil.isLoggedIn, (req,res) => {
 })
 
 const halloffame_router = require('./routes/hall-of-fame.js')(app);
+
 app.use('/hof', halloffame_router);
 
 // Websocket

@@ -221,7 +221,7 @@ app.get('/device/:id', authUtil.isLoggedIn, function (req, res) {
     .catch(err => res.status(500).send({'err':err}));
 })
 
-app.get("/editdevice/:id", isLoggedIn, (req,res) => {
+app.get("/editdevice/:id", authUtil.isLoggedIn, (req,res) => {
     backend.getDevice(req.params.id)
     .then(device => {
         if (device) {
@@ -232,7 +232,7 @@ app.get("/editdevice/:id", isLoggedIn, (req,res) => {
     })
 })
 
-app.post("/editdevice", isLoggedIn, (req,res) => {
+app.post("/editdevice", authUtil.isLoggedIn, (req,res) => {
     logDebug("Trying to change device information. New human readable name %s", req.body.human);
     res.redirect("/main");
 })

@@ -108,10 +108,12 @@ const rest_user_router    = require('./rest/user.js')(app);
 const rest_session_router = require('./rest/session.js')(app);
 const rest_device_router  = require('./rest/device.js')(app);
 
-app.get('/rest', function(req, res, next) {
+app.get('/rest/:x', isLoggedIn, function(req, res, next) {
+    logDebug("Basic Rest setup");
     res.setHeader("Content-Type", conf.json_content_type);
     next('route');
 });
+
 
 app.use('/rest/user', rest_user_router);
 app.use('/rest/session', rest_session_router);

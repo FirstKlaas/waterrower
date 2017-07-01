@@ -1,10 +1,18 @@
-const conf = require('../config.json');
-const express = require('express')
+const express  = require('express')
+
+const logDebug = require('debug')('waterrower:rest:device:debug')
+const logError = require('debug')('waterrower:rest:device:error')
+
+const conf     = require('../config.json');
+const authUtil = require('../auth-util.js');
 
 var exports = module.exports = (app) => {
 	let backend = app.get('backend');
 	const router = express.Router() 
 
+	router.use(authUtil.restCall);
+	router.use(authUtil.isLoggedInForRest);
+	
 	router.get('/active/:id', function(req, res) {
 		backend.isDeviceActive(req.params.id)
 		.then( sessionid => {
@@ -21,7 +29,6 @@ var exports = module.exports = (app) => {
         })
 	    .catch(err =>  res.status(500).json({"err": err})); 
 	});
-
 
 	router.get('/:id', function(req, res) {
 	    backend.getDevice(req.params.id)

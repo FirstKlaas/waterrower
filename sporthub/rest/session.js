@@ -1,4 +1,7 @@
 const express = require('express')
+const authUtil = require('../auth-util.js');
+const logDebug      = require('debug')('waterrower:rest:session:debug')
+const logError      = require('debug')('waterrower:rest:session:error')
 
 var exports = module.exports = (app) => {
 
@@ -6,6 +9,9 @@ var exports = module.exports = (app) => {
 	let waterrower = app.get('waterrower')
 	const router = express.Router() 
 
+	router.use(authUtil.restCall);
+	router.use(authUtil.isLoggedInForRest);
+	
 	router.get('/', function (req, res) {
 	    backend.getSessions()
 	    .then(data => {

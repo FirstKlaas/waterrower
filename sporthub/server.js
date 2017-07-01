@@ -47,8 +47,10 @@ app.use(bodyParser.json());
 let session_config = {
     cookie : 'waterrower.sid',
     secret : 'secret',
-    store  : new FileStore({path:"sessions"}) 
+    store  : new FileStore({path:"sessions"})
 }
+
+//  
 
 /**
     store: session_config.store,
@@ -59,8 +61,6 @@ app.use(session({
     resave: true,
     saveUninitialized: true 
 })); // session secret
-
-logDebug(session_config.secret);
 
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
@@ -263,12 +263,3 @@ backend.stopActiveSessions().then(values => {
     logDebug('Der Server läuft nun auf port %d', conf.port);    
 });
 
-function isLoggedIn(req, res, next) {
-    // if user is authenticated in the session, carry on 
-    if (req.isAuthenticated())
-        return next();
-
-    // if they aren't redirect them to the home page
-    logDebug('User is not authentificated');
-    res.redirect('/');
-}

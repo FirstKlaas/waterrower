@@ -1,20 +1,16 @@
 const express  = require('express')
 const authUtil = require('../auth-util.js');
+const logDebug      = require('debug')('waterrower:rest:user:debug')
+const logError      = require('debug')('waterrower:rest:user:error')
 
 var exports = module.exports = (app) => {
 	let backend = app.get('backend');
 
 	const router = express.Router() 
 
-	router.use(function timeLog(req, res, next) {
-    	console.log('Time: ', Date.now());
-    	console.log('Auth:' + req.isAuthenticated());
-  		next();
-	});
-
-	router.use(authUtil.isLoggedIn);
 	router.use(authUtil.restCall);
-
+	router.use(authUtil.isLoggedInForRest);
+	
 	router.get('/', function (req, res) {
 	    backend.getUsers()
 	    .then(users => res.json({"user" : users}))

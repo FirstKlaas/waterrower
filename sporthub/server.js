@@ -16,7 +16,7 @@ var Twitter         = require('twitter');
 
 var conf            = configuration[app.get('env')];
 var twitter_conf    = require('./twitter.json');
-
+const authUtil      = require('./auth-util.js');
 
 var twitter_client = new Twitter({
   consumer_key: twitter_conf.consumer_key,
@@ -108,12 +108,10 @@ const rest_user_router    = require('./rest/user.js')(app);
 const rest_session_router = require('./rest/session.js')(app);
 const rest_device_router  = require('./rest/device.js')(app);
 
-app.get('/rest/:x', isLoggedIn, function(req, res, next) {
-    logDebug("Basic Rest setup");
+app.get('/rest', function(req, res, next) {
     res.setHeader("Content-Type", conf.json_content_type);
     next('route');
 });
-
 
 app.use('/rest/user', rest_user_router);
 app.use('/rest/session', rest_session_router);
@@ -124,7 +122,7 @@ app.get('/', (req,res) => {
     res.render('login', {message: req.flash('loginMessage')});
 })
 
-app.get('/logout', isLoggedIn, (req,res) => {
+app.get('/logout', authUtil.isLoggedIn, (req,res) => {
     req.logout();
     res.redirect('/');
 })
@@ -133,7 +131,7 @@ app.get('/signup', (req,res) => {
     res.render('signup', {});
 })
 
-app.get('/profile', isLoggedIn, (req,res) => {
+app.get('/profile', authUtil.isLoggedIn, (req,res) => {
     logDebug("Profile anzeigen");
     if (req.user) {
         res.render('profile', {user:req.user});
@@ -143,7 +141,7 @@ app.get('/profile', isLoggedIn, (req,res) => {
     }
 })
 
-app.post('/profile', isLoggedIn, (req, res) => {
+app.post('/profile', authUtil.isLoggedIn, (req, res) => {
     let data = {};
     data.id        = req.user.id;
     data.twitter   = req.body.twitter;
@@ -163,7 +161,7 @@ app.post('/profile', isLoggedIn, (req, res) => {
 })
 
 // wenn der Pfad / aufgerufen wird
-app.get('/main', isLoggedIn, function (req, res) {
+app.get('/main', authUtil.isLoggedIn, function (req, res) {
     logDebug('/main: Session %O',  req.session.passport); 
     if (req.user) { 
         res.render('index', {user:req.user});
@@ -184,46 +182,46 @@ app.post('/signup', passport.authenticate('local-signup', {
     failureFlash : true // allow flash messages
 }));
 
-app.get('/menu.html', isLoggedIn, function (req, res) {
+app.get('/menu.html', authUtil.isLoggedIn, function (req, res) {
     res.render('main_menu', {});
 });
 
-app.get('/livedata.html', isLoggedIn, function (req, res) {
+app.get('/livedata.html', authUtil.isLoggedIn, function (req, res) {
     res.render('live', {});
 });
 
-app.get('/user.html', isLoggedIn, function (req, res) {
+app.get('/user.html', authUtil.isLoggedIn, function (req, res) {
     backend.getUsers()
     .then(users => res.render('user', { 'users': users}))
     .catch(err => res.status(500).send({'err':err}));
 });
 
-app.get('/sessions.html', isLoggedIn, function (req, res) {
+app.get('/sessions.html', authUtil.isLoggedIn, function (req, res) {
     backend.getSessions()
     .then(sessions => res.render('sessions', { 'sessions': sessions}))
     .catch(err => res.status(500).send({'err':err}));
 });
 
-app.get('/usersessions/:id', isLoggedIn, function (req, res) {
+app.get('/usersessions/:id', authUtil.isLoggedIn, function (req, res) {
     backend.getUserSessions(req.params.id)
     .then(sessions => res.render('sessions', { 'sessions': sessions}))
     .catch(err => res.status(500).send({'err':err}));
 });
 
 
-app.get('/devices.html', isLoggedIn, function (req, res) {
+app.get('/devices.html', authUtil.isLoggedIn, function (req, res) {
     backend.getDevices()
     .then(devices => res.render('device', { 'devices': devices, 'user':req.user}))
     .catch(err => res.status(500).send({'err':err}));
 })
 
-app.get('/device/:id', isLoggedIn, function (req, res) {
+app.get('/device/:id', authUtil.isLoggedIn, function (req, res) {
     backend.getDevice(req.params.id)
     .then(device => res.render('device', { 'devices': device,'user':req.user}))
     .catch(err => res.status(500).send({'err':err}));
 })
 
-app.get("/editdevice/:id", isLoggedIn, (req,res) => {
+app.get("/editdevice/:id", authUtil.isLoggedIn, (req,res) => {
     backend.getDevice(req.params.id)
     .then(device => {
         if (device) {
@@ -234,12 +232,13 @@ app.get("/editdevice/:id", isLoggedIn, (req,res) => {
     })
 })
 
-app.post("/editdevice", isLoggedIn, (req,res) => {
+app.post("/editdevice", authUtil.isLoggedIn, (req,res) => {
     logDebug("Trying to change device information. New human readable name %s", req.body.human);
     res.redirect("/main");
 })
 
 const halloffame_router = require('./routes/hall-of-fame.js')(app);
+
 app.use('/hof', halloffame_router);
 
 // Websocket

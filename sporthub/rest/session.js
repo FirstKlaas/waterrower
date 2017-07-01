@@ -62,11 +62,8 @@ var exports = module.exports = (app) => {
 	* since         : 17/05/27
 	* last-modified : 17/05/27
 	*
-	* TODO:
-	*   - Check if the user exists
-	*   - Check if the device exists
 	**/
-	router.get('/start/:userid/:deviceid', function(req, res) {
+	router.get('/start/:deviceid', function(req, res) {
 	    let device = null;
 
 	    backend.getDevice(req.params.deviceid)
@@ -74,7 +71,7 @@ var exports = module.exports = (app) => {
 	    	if (!device) {
 	    		res.status(404).json({"err" : "No such device"})
 	    	} else {
-	    		backend.startSession(req.params.userid,req.params.deviceid)
+	    		backend.startSession(req.user.id,req.params.deviceid)
 	    		.then(session => {
 	    			res.json({"session" : session});
                     waterrower.startSession(device.mac,session.id);

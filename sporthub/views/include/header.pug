@@ -1,5 +1,5 @@
 .header
-  .icon(onClick='showMainMenu()')
+  .icon.clickable(onClick='showMainMenu()')
     i(class="fa fa-BARS",aria-hidden="true")
   if (user && user.twitter_profile)
     a(hfref="/profile")

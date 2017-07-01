@@ -1,6 +1,5 @@
 var socket    = io();
 var session   = null;
-var user      = null;
 var device    = null;
 
 function formatDistance(value) {
@@ -10,7 +9,6 @@ function formatDistance(value) {
 
 function stopSession() {
 	console.log(session);
-	console.log(user);
 	console.log(device);
 
 	if(!session) {
@@ -24,6 +22,7 @@ function stopSession() {
 }
 
 function setDevice(id, clb) {
+	$('#current-device').text('...updating');
 	$.getJSON( "/rest/device/" + id , function( data ) {
 		device = data.device;
 		$('#current-device').text(device.human);
@@ -31,32 +30,27 @@ function setDevice(id, clb) {
 	});
 }
 
-function setUser(id, clb) {
-	$.getJSON( "/rest/user/" + id , function( data ) {
-		user = data.user;
-		$('#current-user').text(user.firstname);
-		if (user.twitter_profile) {
-			$('#profileimage').attr('src',user.twitter_profile.profile_image_url_https_200);
-		} else {
-			$('#profileimage').attr('src','/img/aang.png');
-		}
-	    clb(user);
-	});
-}
+function voidCall() {}
 
 function startSession() {
 	console.log('start session');
-	if (!user) return;
-	console.log('has user');
 	if (!device) return;
 	console.log('has device');
 	if (session) return;
 	console.log('has no session');
-	console.log("/rest/session/start/" + user.id + "/" + device.id);
-	$.getJSON( "/rest/session/start/" + user.id + "/" + device.id, function( data ) {
+	console.log("/rest/session/start/" + device.id);
+	
+	var elem = $('#startstop');
+	elem.removeClass('fa-play-circle-o');
+	elem.removeClass('fa-stop-circle-o');
+	elem.addClass('fa-cog');
+	elem.one('click',function() {
+		voidCall();
+	});			
+
+	$.getJSON( "/rest/session/start/" + device.id, function( data ) {
 		session = data.session;
 		console.log(session);
-		console.log(user);
 		console.log(device);
 	    //setupActions();
 	});
@@ -70,36 +64,10 @@ function showMainMenu() {
 	);
 }
 
-function findUser(id, userarr) {
-	return userarr.find(user => {
-		return user.id == id;
-	});
-}
-
-function showSessionsComplex() {
-	$.getJSON( "/rest/user", data => {
-		$('#content').load('/sessions.html',
-			function() {
-				$("div[userid]").each( function(index) {
-					var userid = $( this ).attr('userid');
-					var user = findUser(userid, data.user);
-					if (user) {
-						$( this ).text(user.firstname);
-					} else {
-						$( this ).text('Guest');
-					}
-				});
-
-				$('#pagetopic').text('Workouts');
-			}
-		);
-	});
-}
-
 function deleteSession(id, update, sender) {
 	$.getJSON( "/rest/session/delete/" + id, data => {
 		if (update) {
-			$(sender).parent().hide();
+			$(sender).parent().remove();
 		}
 	});
 }
@@ -120,45 +88,6 @@ function showUser() {
 	);
 }
 
-function testGraph() {
-	var ctx = document.getElementById("myChart").getContext('2d');
-	var myChart = new Chart(ctx, {
-	    type: 'bar',
-	    data: {
-	        labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
-	        datasets: [{
-	            label: '# of Votes',
-	            data: [12, 19, 3, 5, 2, 3],
-	            backgroundColor: [
-	                'rgba(255, 99, 132, 0.2)',
-	                'rgba(54, 162, 235, 0.2)',
-	                'rgba(255, 206, 86, 0.2)',
-	                'rgba(75, 192, 192, 0.2)',
-	                'rgba(153, 102, 255, 0.2)',
-	                'rgba(255, 159, 64, 0.2)'
-	            ],
-	            borderColor: [
-	                'rgba(255,99,132,1)',
-	                'rgba(54, 162, 235, 1)',
-	                'rgba(255, 206, 86, 1)',
-	                'rgba(75, 192, 192, 1)',
-	                'rgba(153, 102, 255, 1)',
-	                'rgba(255, 159, 64, 1)'
-	            ],
-	            borderWidth: 1
-	        }]
-	    },
-	    options: {
-	        scales: {
-	            yAxes: [{
-	                ticks: {
-	                    beginAtZero:true
-	                }
-	            }]
-	        }
-	    }
-	});
-}
 function showHallOfFame() {
 	$('#content').load('/hof',
 		function() {
@@ -193,7 +122,7 @@ function showSessions() {
 
 
 function showLive() {
-	if (user && device) {
+	if (device) {
 		$('#content').load('/livedata.html', function() {
 			$('#pagetopic').text('Live Data');
 			setupActions();
@@ -240,55 +169,19 @@ function checkForActiveSession() {
 	});
 }
 
-function selectUser(id) {
-	if (session) {
-		alert('Session is running');
-	} else {
-		setUser(id,
-			function(data) {
-				if (!device) {
-					showDevices();
-				} else {
-					showLive();
-				}
-			}
-		)
-	}	
-}
-
 function selectDevice(id) {
 	if (session) {
 		alert('Session is running');
 	} else {
 		setDevice(id,
 			function(data) {
-				if (!user) {
-					showUser();
-				} else {
-					showLive();
-				}
+				showLive();
 			}
 		)
 	}	
 }
 
 function onInit() {
-	// Testen, ob eine Session gerade laeuft.
-	
-	checkForActiveSession().then(server_session => {
-		if(server_session) {
-			session = server_session;
-			setUser(session.user_id,
-				function(rUser) {
-					setDevice(session.device_id,
-						function(rDevice) {
-							showLive();
-						}
-					);
-				}
-			);
-		}
-	})
 }
 
 socket.on('message', 
@@ -306,7 +199,7 @@ socket.on('message',
 socket.on('session-start',
 	function(data) {
 		console.log('io=> session-start ' + JSON.stringify(data));
-		onInit();
+		setupActions();
 	}
 );
 
@@ -314,7 +207,7 @@ socket.on('session-stop',
 	function(data) {
 		session = null;
 		console.log('io=> session-stop ' + JSON.stringify(data));
-		onInit();
+		setupActions();
 	}
 );
 

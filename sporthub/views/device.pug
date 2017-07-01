@@ -1,6 +1,6 @@
 
 each device in devices
-  .row(onclick='selectDevice(' + device.id + ')')
+  .row.clickable(onclick='selectDevice(' + device.id + ')')
     .item
       div #{device.human}
       div.small #{device.mac}

@@ -76,7 +76,7 @@ function findUser(id, userarr) {
 	});
 }
 
-function showSessions() {
+function showSessionsComplex() {
 	$.getJSON( "/rest/user", data => {
 		$('#content').load('/sessions.html',
 			function() {
@@ -163,7 +163,6 @@ function showHallOfFame() {
 	$('#content').load('/hof',
 		function() {
 			$('#pagetopic').text('Bestenliste');
-			testGraph();
 		}
 	);
 }
@@ -184,8 +183,8 @@ function showHofDistance() {
 	);
 }
 
-function showSessionsWhat() {
-	$('#content').load('/sessions.html',
+function showSessions() {
+	$('#content').load('/usersessions',
 		function() {
 			$('#pagetopic').text('Workouts');
 		}

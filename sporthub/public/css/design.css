@@ -123,6 +123,10 @@ H2 {
 	font-size: 2em;
 }
 
+.clickable {
+	cursor: pointer;
+}
+
 .row {
 	display: flex;
 	flex-direction: row;

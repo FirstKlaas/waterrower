@@ -1,7 +1,9 @@
 const express = require('express')
-const authUtil = require('../auth-util.js');
+
 const logDebug      = require('debug')('waterrower:rest:session:debug')
 const logError      = require('debug')('waterrower:rest:session:error')
+
+const authUtil = require('../auth-util.js');
 
 var exports = module.exports = (app) => {
 

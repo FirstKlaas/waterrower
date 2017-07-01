@@ -127,7 +127,7 @@ class Backend {
 	updateUser(userdata) {
 		let self = this;
 		return new Promise((resolve,reject) => {
-			if (!userdata || !userdata.id) return reject(new Error('No valid userdata'));
+			if (!userdata || !userdata.id) return reject(new Error('No valid user data'));
 			this.getUser(userdata.id, false)
 			.then( user => {
 				if (!user) return reject(new Error('Not a valid user.'));
@@ -144,6 +144,38 @@ class Backend {
 				)
 			})
 			.catch( err => reject(err));
+		})
+	}
+
+	updateDevice(devicedata) {
+		let self = this;
+		return new Promise((resolve,reject) => {
+			if (!devicedata || !devicedata.mac) {
+				logError("Cannot update device data. Provided data is %o", devicedata); 
+				return reject(new Error('No valid device data'));
+			}
+			logDebug("Fetching device %s from database ", devicedata.mac);
+
+			self.getDeviceByMacAddress(devicedata.mac)
+			.then( device => {
+				if (!device) {
+					logError("No such device: %s ", devicedata.mac);
+					return reject(new Error("No such device: " + devicedata.mac));
+				} else {					
+					logDebug("Updating device in database");
+					self.db.run('UPDATE device SET human=? WHERE mac=?',
+						[devicedata.human,devicedata.mac],
+						function(err) {
+							if (err) return reject(err);
+							logDebug("Update succeded. Returning updated device information.");
+							self.getDeviceByMacAddress(devicedata.mac)
+							.then( device => resolve(device))	
+							.catch( err => reject(err));					
+						}
+					)
+				}
+			})
+			.catch( err => reject(err));		
 		})
 	}
 
@@ -226,7 +258,7 @@ class Backend {
 
 	getSessions() {
 		return new Promise((resolve,reject) => {
-			this.db.all("SELECT * FROM session ORDER BY id DESC", (err, rows) => {
+			this.db.all("SELECT * FROM session ORDER BY start DESC", (err, rows) => {
 		    	if (err) return reject(err);
 				resolve(rows);
 		    });			
@@ -442,7 +474,7 @@ class Backend {
 		})
 	}
 
-	getUserSession(userid) {
+	getUserSessions(userid) {
 		return new Promise((resolve, reject) => {
 		    this.db.all("SELECT * FROM session WHERE user_id=? ORDER BY start",[userid], 
 		    	(err, rows) => {

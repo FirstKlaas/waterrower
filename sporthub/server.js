@@ -117,29 +117,9 @@ app.use('/rest/user', rest_user_router);
 app.use('/rest/session', rest_session_router);
 app.use('/rest/device', rest_device_router);
 
-
-app.get('/', (req,res) => {
-    res.render('login', {message: req.flash('loginMessage')});
-})
-
-app.get('/logout', authUtil.isLoggedIn, (req,res) => {
-    req.logout();
-    res.redirect('/');
-})
-
-app.get('/signup', (req,res) => {
-    res.render('signup', {});
-})
-
-app.get('/profile', authUtil.isLoggedIn, (req,res) => {
-    logDebug("Profile anzeigen");
-    if (req.user) {
-        res.render('profile', {user:req.user});
-    } else {
-        logError("No user object althoug authentificated. Weired.");
-        res.redirect('/');
-    }
-})
+// Everything dealing with the accounting
+let account_router = require('./routes/account.js')(passport);
+app.use('/', account_router);
 
 app.post('/profile', authUtil.isLoggedIn, (req, res) => {
     let data = {};
@@ -160,9 +140,8 @@ app.post('/profile', authUtil.isLoggedIn, (req, res) => {
     
 })
 
-// wenn der Pfad / aufgerufen wird
+// wenn der Pfad /main aufgerufen wird
 app.get('/main', authUtil.isLoggedIn, function (req, res) {
-    logDebug('/main: Session %O',  req.session.passport); 
     if (req.user) { 
         res.render('index', {user:req.user});
     } else {
@@ -269,5 +248,5 @@ backend.stopActiveSessions().then(values => {
 
     // Portnummer in die Konsole schreiben
     logDebug('Der Server läuft nun auf port %d', conf.port);    
-});
+}).catch(err => console.log(err));
 

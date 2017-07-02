@@ -152,42 +152,9 @@ app.get('/usersessions', authUtil.isLoggedIn, function (req, res) {
     .catch(err => res.status(500).send({'err':err}));
 });
 
+let device_router = require('./routes/devices.js')(backend);
+app.use('/', device_router);
 
-app.get('/devices.html', authUtil.isLoggedIn, function (req, res) {
-    backend.getDevices()
-    .then(devices => res.render('device', { 'devices': devices, 'user':req.user}))
-    .catch(err => res.status(500).send({'err':err}));
-})
-
-app.get('/device/:id', authUtil.isLoggedIn, function (req, res) {
-    backend.getDevice(req.params.id)
-    .then(device => res.render('device', { 'devices': device,'user':req.user}))
-    .catch(err => res.status(500).send({'err':err}));
-})
-
-app.get("/editdevice/:id", authUtil.isLoggedIn, (req,res) => {
-    backend.getDevice(req.params.id)
-    .then(device => {
-        if (device) {
-            res.render('editdevice', { 'device': device,'user':req.user});
-        } else {
-            res.status(404).json({'msg':'Device not available.'});
-        }
-    })
-})
-
-app.post("/editdevice", authUtil.isLoggedIn, (req,res) => {
-    logDebug("Trying to change device information for device %s . New human readable name %s", req.body.mac, req.body.human);
-    let device = {
-        mac   : req.body.mac, 
-        human : req.body.human 
-    }
-
-    backend.updateDevice(device)
-    .then( device => res.redirect("/main"))
-    .catch( err => res.status(404).send("Could not update device"));
-    
-})
 
 const halloffame_router = require('./routes/hall-of-fame.js')(app);
 

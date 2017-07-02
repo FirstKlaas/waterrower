@@ -5,7 +5,7 @@ const logError = require('debug')('waterrower:account:error')
 
 const authUtil = require('../auth-util.js')
 
-var exports = module.exports = (passport) => {
+var exports = module.exports = (passport, backend) => {
 	const router = express.Router();
 
 	router.get('/', (req,res) => {

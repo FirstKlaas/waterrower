@@ -68,6 +68,7 @@ app.use(passport.session()); // persistent login sessions
 app.use(flash()); // use connect-flash for flash messages stored in session
 
 const waterrower = require('./waterrower.js')(conf.mqttserver);
+
 app.set('backend',backend);
 app.set('waterrower',waterrower);
 app.set('twitter', twitter_util);
@@ -92,15 +93,15 @@ waterrower.on('device-connected', function(sender, mac) {
 });
 
 waterrower.on('session-start', function(sender, id) {
-    backend.getSession(id).then(
-        session => io.emit('session-start', session) 
-    ) 
+    backend.getSession(id)
+    .then(session => io.emit('session-start', session))
+    .catch(err => logError("Could not retrieve session %d", id));
 });
 
 waterrower.on('session-stop', function(sender, sessionid) {
-    backend.getSession(sessionid).then(
-        session => io.emit('session-stop', session)
-    )
+    backend.getSession(sessionid)
+    .then(session => io.emit('session-stop', session))
+    .catch(err => logError("Could not retrieve session %d", id));
 });
 
 // Setting up routes
@@ -108,37 +109,13 @@ const rest_user_router    = require('./rest/user.js')(app);
 const rest_session_router = require('./rest/session.js')(app);
 const rest_device_router  = require('./rest/device.js')(app);
 
-app.get('/rest', function(req, res, next) {
-    res.setHeader("Content-Type", conf.json_content_type);
-    next('route');
-});
-
 app.use('/rest/user', rest_user_router);
 app.use('/rest/session', rest_session_router);
 app.use('/rest/device', rest_device_router);
 
 // Everything dealing with the accounting
-let account_router = require('./routes/account.js')(passport);
+let account_router = require('./routes/account.js')(passport,backend);
 app.use('/', account_router);
-
-app.post('/profile', authUtil.isLoggedIn, (req, res) => {
-    let data = {};
-    data.id        = req.user.id;
-    data.twitter   = req.body.twitter;
-    data.firstname = req.body.firstname;
-    data.lastname  = req.body.lastname;
-    logDebug("Userprofile Changed. New Values: %O", data);
-    backend.updateUser(data)
-    .then(user => {
-        req.user = user;
-        res.redirect("/main");    
-    })
-    .catch( err => {
-        logError(err);
-        res.redirect('/');
-    })
-    
-})
 
 // wenn der Pfad /main aufgerufen wird
 app.get('/main', authUtil.isLoggedIn, function (req, res) {
@@ -148,18 +125,6 @@ app.get('/main', authUtil.isLoggedIn, function (req, res) {
         res.redirect('/');
     }
 });
-
-app.post('/login', passport.authenticate('local-login', {
-    successRedirect : '/main', 
-    failureRedirect : '/', // redirect back to the signup page if there is an error
-    failureFlash : true // allow flash messages
-}))
-
-app.post('/signup', passport.authenticate('local-signup', {
-    successRedirect : '/profile', // redirect to the secure profile section
-    failureRedirect : '/signup', // redirect back to the signup page if there is an error
-    failureFlash : true // allow flash messages
-}));
 
 app.get('/menu.html', authUtil.isLoggedIn, function (req, res) {
     res.render('main_menu', {});

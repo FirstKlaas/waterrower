@@ -58,7 +58,7 @@ let session_config = {
 app.use(session({
     key: session_config.cookie,
     secret: session_config.secret,
-    store: session_config.store,resave: true,
+    resave: true,
     saveUninitialized: true 
 })); // session secret
 

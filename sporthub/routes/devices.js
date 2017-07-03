@@ -39,7 +39,9 @@ var exports = module.exports = (db) => {
 	        mac   : req.body.mac, 
 	        human : req.body.human 
 	    }
-
+	    logDebug("Session:");
+	    logDebug("%O",req.session);
+	    
 	    db.updateDevice(device)
 	    .then( device => res.redirect("/main"))
 	    .catch( err => res.status(404).send("Could not update device"));

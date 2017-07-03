@@ -11,9 +11,10 @@ var flash           = require('connect-flash');
 var cookieParser    = require('cookie-parser');
 var bodyParser      = require('body-parser');
 var session         = require('express-session');
-const FileStore     = require('session-file-store')(session);
+var SQLiteStore     = require('connect-sqlite3')(session);
+//const FileStore     = require('session-file-store')(session);
 var Twitter         = require('twitter');
-
+    
 var conf            = configuration[app.get('env')];
 var twitter_conf    = require('./twitter.json');
 const authUtil      = require('./auth-util.js');
@@ -47,7 +48,7 @@ app.use(bodyParser.json());
 let session_config = {
     cookie : 'waterrower.sid',
     secret : 'secret',
-    store  : new FileStore({path:"sessions"})
+    store  : new SQLiteStore
 }
 
 //  
@@ -56,6 +57,7 @@ let session_config = {
     store: session_config.store,
 **/
 app.use(session({
+    store: session_config.store,
     key: session_config.cookie,
     secret: session_config.secret,
     resave: true,

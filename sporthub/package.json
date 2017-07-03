@@ -18,6 +18,7 @@
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.17.2",
     "connect-flash": "^0.1.1",
+    "connect-sqlite3": "^0.9.9",
     "cookie-parser": "^1.4.3",
     "debug": "^2.6.8",
     "events": "^1.1.1",

@@ -1,4 +1,4 @@
-form(action="/editdevice", method="post")
+form#frmEditDevice(action="/editdevice", method="post")
   .row  
     .item 
       .label Screen Name
@@ -21,5 +21,5 @@ form(action="/editdevice", method="post")
   .row
     .item
       button(type="submit") Update
-      script $( "#frmProfile" ).submit(updateDeviceInfo)
+      script $( "#frmEditDevice" ).submit(updateDeviceInfo)
       

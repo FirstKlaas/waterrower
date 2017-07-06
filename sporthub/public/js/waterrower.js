@@ -21,12 +21,15 @@ function stopSession() {
 	});
 }
 
+function setDeviceName(name) {
+	$('#current-device').text(name);
+}
+
 function setDevice(id, clb) {
-	$('#current-device').text('...updating');
-	console.log('##########################');
+	setDeviceName('...updating');
 	$.post("/set/active/device/" + id, function( data ) {
 		device = data.device;
-		$('#current-device').text(device.human);
+		setDeviceName(device.human);
 	    clb(device);
 	});
 }
@@ -53,7 +56,6 @@ function startSession() {
 		session = data.session;
 		console.log(session);
 		console.log(device);
-	    //setupActions();
 	});
 }
 
@@ -119,12 +121,13 @@ function updateDeviceInfo( event ) {
 		human : $form.find("input[name='human']").val()
 	}
 
-	var posting = $.post( url, userdata );
+	var posting = $.post( url, devicedata );
 
 	posting.done(data => {
-		console.log('Nun die devices anzeigen');
 		showDevices();
 	})	
+
+	return false;
 }
 
 function updateProfile( event ) {

@@ -23,14 +23,12 @@
     i(class="fa fa-history",aria-hidden="true")
   .item Meine Workouts
   .item &nbsp;
-div.row
+.row.clickable(onClick='showProfile()')
   .item.bullet
-    a(href="/profile") 
-      i(class="fa fa-user",aria-hidden="true")
-  .item 
-    a(href="/profile") Profil
+    i(class="fa fa-user",aria-hidden="true")
+  .item Profil
   .item &nbsp;
-div.row
+.row
   .item.bullet
     a(href="/logout") 
       i(class="fa fa-power-off",aria-hidden="true")  

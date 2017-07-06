@@ -22,9 +22,14 @@ var exports = module.exports = (passport, backend) => {
 	})
 
 	router.get('/profile', authUtil.isLoggedIn, (req,res) => {
-	    logDebug("Profile anzeigen");
 	    if (req.user) {
-	        res.render('profile', {user:req.user});
+	    	let data = {
+	    		user : req.user
+	    	}
+	    	if (req.session && req.session.activeDevice) {
+	    		data.activeDevice = req.session.activeDevice
+	    	}
+	        res.render('profile', data);
 	    } else {
 	        logError("No user object althoug authentificated. Weired.");
 	        res.redirect('/');

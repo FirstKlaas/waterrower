@@ -23,7 +23,8 @@ function stopSession() {
 
 function setDevice(id, clb) {
 	$('#current-device').text('...updating');
-	$.getJSON( "/rest/device/" + id , function( data ) {
+	console.log('##########################');
+	$.post("/set/active/device/" + id, function( data ) {
 		device = data.device;
 		$('#current-device').text(device.human);
 	    clb(device);
@@ -80,12 +81,70 @@ function showDevices() {
 	);
 }
 
+function setUsername(name) {
+	$('#current-user').text(name);
+}
+
 function showUser() {
 	$('#content').load('/user.html',
 		function() {
 			$('#pagetopic').text('Sportler');
 		}
 	);
+}
+
+function showProfile() {
+	$('#content').load('/profile',
+		function() {
+			$('#pagetopic').text('My Profile');
+		}
+	);	
+}
+
+function showDeviceForm(id) {
+	$('#content').load('/editdevice/' + id,
+		function() {
+			$('#pagetopic').text('Edit Device');
+		}
+	);	
+}
+
+function updateDeviceInfo( event ) {
+	event.preventDefault();
+	var $form = $( this );
+	url = $form.attr( "action" );
+
+	let devicedata = {
+		mac   : $form.find("input[name='mac']").val(),
+		human : $form.find("input[name='human']").val()
+	}
+
+	var posting = $.post( url, userdata );
+
+	posting.done(data => {
+		console.log('Nun die devices anzeigen');
+		showDevices();
+	})	
+}
+
+function updateProfile( event ) {
+	event.preventDefault();
+	var $form = $( this );
+	url = $form.attr( "action" );
+	let userdata = {
+		firstname : $form.find("input[name='firstname']").val(),
+		lastname  : $form.find("input[name='lastname']").val(),
+		twitter   : $form.find("input[name='twitter']").val()
+	};
+	
+	var posting = $.post( url, userdata );
+
+	posting.done(data => {
+		setUsername(userdata.firstname);
+		showMainMenu();
+	})	
+
+	return false;
 }
 
 function showHallOfFame() {

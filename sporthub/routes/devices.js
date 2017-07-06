@@ -33,6 +33,24 @@ var exports = module.exports = (db) => {
 	    })
 	})
 
+	router.post("/set/active/device/:id", authUtil.restCall, (req,res) => {
+		db.getDevice(req.params.id)
+		.then( device => {
+			if (device) {
+				req.session.activeDevice = device;
+				res.json({'device':device});
+			} else {
+				req.session.activeDevice = undefined;
+				res.status(404).json({'msg':'Device not available.'});
+			}
+		})
+		.catch(err => {
+			logError(err);
+			req.session.activeDevice = undefined;
+			res.status(500).json({'msg':'Could not set active device.', 'reason':err});
+		})
+	})
+
 	router.post("/editdevice", (req,res) => {
 	    logDebug("Trying to change device information for device %s . New human readable name %s", req.body.mac, req.body.human);
 	    let device = {
@@ -40,6 +58,7 @@ var exports = module.exports = (db) => {
 	        human : req.body.human 
 	    }
 	    logDebug("Session:");
+	    req.session.wrDevice = device;
 	    logDebug("%O",req.session);
 	    
 	    db.updateDevice(device)

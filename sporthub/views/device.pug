@@ -1,14 +1,13 @@
 
 each device in devices
-  .row.clickable(onclick='selectDevice(' + device.id + ')')
-    .item
+  .row
+    .item.clickable(onclick='selectDevice(' + device.id + ')')
       div #{device.human}
       div.small #{device.mac}
     
     if (user.isadmin == 1)
-      .item
-        a(href='/editdevice/' + device.id)
-          i(class="fa fa-edit",aria-hidden="true")
+      .item.clickable(onclick='showDeviceForm(' + device.id + ')')
+        i(class="fa fa-edit",aria-hidden="true")
     else
      .item   
 

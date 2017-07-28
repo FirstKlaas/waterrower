@@ -1,10 +1,6 @@
-let socket    = io();
+var socket    = null;
 var session   = null;
 var device    = null;
-
-socket.on("connect", () => {
-	console.log("Socket connected");
-})
 
 function formatDistance(value) {
 	if (value < 1000) return numeral(value).format('0,0.00') + ' m';
@@ -345,55 +341,66 @@ function onInit() {
 var nsp_user = null;
 
 function initSocketIO() {
-	console.log("init nsp_user");
-	if (nsp_user) {
-		console.log("nsp_user already initialized");
+	console.log("init socket io");
+	if (socket != null) {
+		console.log("websocket already initialized");
+		return;
 	}
+
+
 	getMe().then( user => {
 		if (!user) {
 			console.log("Not logged in. No user namespace for socket connection.")
 			return;
 		}
 		
-		if(nsp_user) return;
-		console.log("Init socket namespace /" + user.login);
-		let nsp = '/' + user.login;
+		socket = io();
+		socket.on("connect", (s) => {
+			console.log("Init socket namespace /" + user.login);
+			let nsp = '/' + user.login;
 
-		nsp_user = io(nsp);
-		nsp_user.emit('bingo',{});
-		
-		io(nsp).on('connect', function(data) {
-			console.log('nsp connected');
+			nsp_user = io(nsp);
+			//nsp_user.emit('bingo',{});
+			
+			console.log("Socket connected. User logged in. Now adding callbacks for user namespace");
+			
+			nsp_user.on('connect',
+				function(data) {
+					console.log('nsp_user connect');
+				}
+			);
+				
+			nsp_user.on('session-start',
+				function(data) {
+					console.log("io('" + nsp + "').session-start");
+					session = data;
+					setupActions();
+				}
+			);
+
+			nsp_user.on('session-stop',
+				function(data) {
+					console.log("io('" + nsp + "').session-stop");
+					session = null;
+					setupActions();
+				}
+			);
+
+			nsp_user.on('message', 
+				function(data) { 
+					console.log("io('" + nsp + "').message");
+					currentSession = data.sessionid;
+					$('#dd').text(formatDistance(data.distance));
+					$('#speed').text(numeral(data.speed).format('0,0.00'));
+					$('#max_speed').text(numeral(data.max_speed).format('0,0.00'));
+					$('#avg_speed').text(numeral(data.avg_speed).format('0,0.00'));
+					$('#ds').text(numeral(data.seconds).format('00:00:00'));
+					$('#ticks').text(data.ticks);
+				}
+			);
 		})
-		
-		io(nsp).on('session-start',
-			function(data) {
-				console.log("io('" + nsp + "').session-start");
-				session = data;
-				setupActions();
-			}
-		);
 
-		io(nsp).on('session-stop',
-			function(data) {
-				console.log("io('" + nsp + "').session-stop");
-				session = null;
-				setupActions();
-			}
-		);
-
-		io(nsp).on('message', 
-			function(data) { 
-				console.log("io('" + nsp + "').message");
-				currentSession = data.sessionid;
-				$('#dd').text(formatDistance(data.distance));
-				$('#speed').text(numeral(data.speed).format('0,0.00'));
-				$('#max_speed').text(numeral(data.max_speed).format('0,0.00'));
-				$('#avg_speed').text(numeral(data.avg_speed).format('0,0.00'));
-				$('#ds').text(numeral(data.seconds).format('00:00:00'));
-				$('#ticks').text(data.ticks);
-			}
-		);
+		//if(nsp_user) return;
 	});
 }
 

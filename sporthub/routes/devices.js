@@ -11,19 +11,19 @@ var exports = module.exports = (db) => {
 	router.use(authUtil.isLoggedIn);
 	
 	router.get('/devices.html', (req, res) => {
-	    db.getDevices()
+	    db.device.getAll()
 	    .then(devices => res.render('device', { 'devices': devices, 'user':req.user}))
 	    .catch(err => res.status(500).send({'err':err}));
 	})
 
 	router.get('/device/:id', function (req, res) {
-	    db.getDevice(req.params.id)
+	    db.device.get(req.params.id)
 	    .then(device => res.render('device', { 'devices': device,'user':req.user}))
 	    .catch(err => res.status(500).send({'err':err}));
 	})
 
 	router.get("/editdevice/:id", (req,res) => {
-	    db.getDevice(req.params.id)
+	    db.device.get(req.params.id)
 	    .then(device => {
 	        if (device) {
 	            res.render('editdevice', { 'device': device,'user':req.user});
@@ -34,7 +34,7 @@ var exports = module.exports = (db) => {
 	})
 
 	router.post("/set/active/device/:id", authUtil.restCall, (req,res) => {
-		db.getDevice(req.params.id)
+		db.device.get(req.params.id)
 		.then( device => {
 			if (device) {
 				req.session.activeDevice = device;
@@ -51,20 +51,26 @@ var exports = module.exports = (db) => {
 		})
 	})
 
+	router.get("/active/device", authUtil.restCall, (req,res) => {
+		if (req.session && req.session.activeDevice) {
+			res.json({'device':req.session.activeDevice});
+		} else {
+			res.status(404).json({});
+		}
+	})
+
 	router.post("/editdevice", (req,res) => {
 	    logDebug("Trying to change device information for device %s . New human readable name %s", req.body.mac, req.body.human);
 	    let device = {
 	        mac   : req.body.mac, 
 	        human : req.body.human 
 	    }
-	    logDebug("Session:");
-	    req.session.wrDevice = device;
-	    logDebug("%O",req.session);
-	    
-	    db.updateDevice(device)
+	    db.device.update(device)
 	    .then( device => res.redirect("/main"))
-	    .catch( err => res.status(404).send("Could not update device"));
-	    
+	    .catch( err => {
+	    	logError("%O",err);
+	    	res.status(404).send("Could not update device");
+		});
 	})
 
 	return router;

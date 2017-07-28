@@ -19,6 +19,10 @@ var exports = module.exports = (app) => {
 	    .catch(error => res.status(500).json({"err":err}));
 	});
 
+	router.get('/me', (req,res) => {
+		res.json(req.user);
+	})
+
 	router.get('/:userid', function (req, res) {
 	    backend.getUser(req.params.userid)
 	    	.then(user => {

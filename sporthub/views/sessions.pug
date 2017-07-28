@@ -26,8 +26,8 @@
 each session in sessions
   .row(sid=session.id) 
     .item
-      div(userid=session.user_id) #{session.distance} 
-      .small #{session.distance} m
+      div(userid=session.user_id) #{session.distance} m 
+      .small #{session.human}
     .item 
       div #{prettyDate(session.start)}
       .small #{prettyDuration(session)}min / #{prettyTime(session.start)} - #{prettyTime(session.end)}

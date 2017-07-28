@@ -52,7 +52,7 @@ BODY {
 #profileimage {
 	display: flex;
 	flex: 0 0 200px;
-	width: 200px
+	width: 200px;
 	height: 200px;	
     border-radius:50%;
     overflow:hidden;
@@ -147,30 +147,6 @@ H2 {
 	margin-bottom: 5px;
 }
 
-.fixed20 {
-	flex: 0 0 20px;
-}
-
-.fixed40 {
-	flex: 0 0 40px;
-}
-
-.fixed60 {
-	flex: 0 0 60px;
-}
-
-.fixed80 {
-	flex: 0 0 80px;
-}
-
-.fixed120 {
-	flex: 0 0 120px;
-}
-
-.fixed180 {
-	flex: 0 0 180px;
-}
-
 .item {
 	flex: 1 1 auto;
 	margin: 0px auto;
@@ -192,6 +168,32 @@ H2 {
 .item a {
 	text-decoration: none;
 	color: inherit;
+}
+
+.fixed20 {
+	max-width: 20px;
+}
+
+.fixed40 {
+	max-width: 40px;
+}
+
+.fixed60 {
+	max-width: 60px;
+}
+
+.fixed80 {
+	max-width: 80px;
+	min-width: 80px;
+	flex-grow: 0;
+}
+
+.fixed120 {
+	max-width: 120px;
+}
+
+.fixed180 {
+	max-width: 180px;
 }
 
 .small {

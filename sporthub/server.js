@@ -12,7 +12,6 @@ var cookieParser    = require('cookie-parser');
 var bodyParser      = require('body-parser');
 var session         = require('express-session');
 var SQLiteStore     = require('connect-sqlite3')(session);
-//const FileStore     = require('session-file-store')(session);
 var Twitter         = require('twitter');
     
 var conf            = configuration[app.get('env')];
@@ -45,13 +44,31 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(bodyParser.json());
 
+io.on('connection', data => {
+    logError("Socket connection established");
+})
+
 let session_config = {
     cookie : 'waterrower.sid',
     secret : 'secret',
     store  : new SQLiteStore
 }
 
-//  
+function emitToView(view, topic, data) {
+    //io.of(view).emit(topic,data);
+    io.emit(topic,data);
+    
+    let nsView = io.of(view);
+    nsView.clients((err,clients) => {
+        clients.forEach(client => {
+            let socket = nsView.connected[client];
+            if (socket) {
+                socket.emit(topic, data);
+            }
+        })
+    })
+    
+}
 
 /**
     store: session_config.store,
@@ -79,34 +96,70 @@ app.locals.numeral = require('numeral');
 
 waterrower.on('data', function (sender, data) {
     backend.insertSessionEntry(data);
-    io.emit('message', data);
+    backend.getSession(data.sessionid)
+    .then( session => { 
+        if (session) return backend.getUser(session.user_id);
+        logError("Not a valid session.");
+        logError("%O", data);
+        Promise.reject(new Error('Not a valid session. This is an inconsistency.'));
+    })
+    .then( user => {
+        if (!user) return Promise.reject(new Error("No user for given session"));
+        emitToView(`/${user.login}`,'message', data) 
+        //logDebug("Emitting data record to %s.",user.login);
+    })
+
+    .catch( err => logError("Error while dispatching data record from device. %o", err) )
 });
 
 waterrower.on('device-connected', function(sender, mac) {
     logDebug("External device registered. Checking, if device exists in database.");
-    backend.getDeviceByMacAddress(mac).then( device => {
+    backend.device.getDeviceByMacAddress(mac).then( device => {
         if (device) {
-            logDebug("Device %o already registered. Welcome back",device);
+            logDebug("Device %s already registered. Welcome back",device.human);
+            return Promise.resolve(device);
         } else {
             logDebug("New device %s. Try to register.", mac);
-            backend.addNewDevice(mac).then(device => logDebug("New registered device is %j",device));
+            return backend.device.addNewDevice(mac);
         }
-    }).catch(err => logError("%O",err));    
+    })
+    .then(device => logDebug("Device is %j",device))
+    .catch(err => logError("%O",err));    
 });
 
 waterrower.on('session-start', function(sender, id) {
+    let s = null;
+
     backend.getSession(id)
-    .then(session => io.emit('session-start', session))
-    .catch(err => logError("Could not retrieve session %d", id));
+    .then(session => {
+        if (!session) return Promise.reject(new Error("No session found"));
+        s = session;
+        return backend.getUser(session.user_id);
+    })
+    .then( user => {
+        if (!user) return Promise.reject(new Error("No user found"));
+        logDebug('Going to emit session-start for user %s', user.login);
+        emitToView(`/${user.login}`,'session-start', s);
+    })
+    .catch(err => logError("Could not notify sockets about session start. %s %O", id, err));
 });
 
 waterrower.on('session-stop', function(sender, sessionid) {
+    let s = null;
     backend.getSession(sessionid)
-    .then(session => io.emit('session-stop', session))
-    .catch(err => logError("Could not retrieve session %d", id));
+    .then(session => {
+        if (!session) return Promise.reject('No session');
+        s = session;
+        return backend.getUser(session.user_id);
+    })
+    .then( user => {
+        logDebug('Going to emit session-stop for user %s (%d)', user.login, s.id)
+        emitToView(`/${user.login}`,'session-stop', s)
+    })
+    .catch(err => logError("Could not retrieve session %d or user. (%o)", id, err));
 });
 
-// Setting up routes
+// Setting up the REST routes
 const rest_user_router    = require('./rest/user.js')(app);
 const rest_session_router = require('./rest/session.js')(app);
 const rest_device_router  = require('./rest/device.js')(app);
@@ -122,7 +175,7 @@ app.use('/', account_router);
 // wenn der Pfad /main aufgerufen wird
 app.get('/main', authUtil.isLoggedIn, function (req, res) {
     if (req.user) { 
-        res.render('index', {user:req.user});
+        res.render('index', {user:req.user,device:req.session.activeDevice});
     } else {
         res.redirect('/');
     }
@@ -163,6 +216,7 @@ const halloffame_router = require('./routes/hall-of-fame.js')(app);
 app.use('/hof', halloffame_router);
 
 // Websocket
+/**
 io.sockets.on('connection', function (socket) {
 	// der Client ist verbunden
 	//console.log('Connected');
@@ -174,13 +228,14 @@ io.sockets.on('connection', function (socket) {
 		io.sockets.emit('chat', { zeit: new Date(), name: data.name || 'Anonym', text: data.text });
 	});
 });
+**/
 
-backend.stopActiveSessions().then(values => {
+//backend.stopActiveSessions().then(values => {
     // webserver
     // auf den Port x schalten
-    server.listen(conf.port);
+server.listen(conf.port);
 
-    // Portnummer in die Konsole schreiben
-    logDebug('Der Server läuft nun auf port %d', conf.port);    
-}).catch(err => console.log(err));
+// Portnummer in die Konsole schreiben
+logDebug('Der Server läuft nun auf port %d', conf.port);    
+//}).catch(err => console.log(err));
 

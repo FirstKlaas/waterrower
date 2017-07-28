@@ -9,4 +9,7 @@
        img#profileimage(src='/img/aang.png')
   .title
     h1#current-user #{user.firstname}
-    h2#current-device Kein Gerät ausgewählt
+    if (device)
+      h2#current-device #{device.human}
+    else
+      h2#current-device Kein Gerät ausgewählt  

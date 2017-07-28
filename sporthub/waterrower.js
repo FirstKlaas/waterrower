@@ -2,6 +2,9 @@ const EventEmitter = require('events');
 const mqtt     = require('mqtt');
 const mqttutil = require('./mqtt-device-util.js'); 
 
+const logDebug = require('debug')('waterrower:waterrower:debug')
+const logError = require('debug')('waterrower:waterrower:error')
+
 var exports = module.exports = (server) => {
 	return new Waterrower(server);
 };
@@ -23,7 +26,6 @@ class Waterrower extends EventEmitter {
 	constructor(server) {
         super();
 		let self = this;
-		this.sessionid = null;
 		this.mqtt = mqtt.connect('mqtt://' + server);
 		this.mqtt.on('connect', function() {
             self.mqtt.subscribe('sportshub/#')
@@ -40,6 +42,7 @@ class Waterrower extends EventEmitter {
 	}
     
 	startSession(mac,id) {
+        logDebug("Starting session %d for device %s", id, mac);
         const payload = Buffer.allocUnsafe(4);
         payload[0] = mqttutil.START_SESSION_CMD;   // CMD StartSession
         payload[1] = (id >> 8) & 0xFF              // HighByte Session
@@ -49,17 +52,13 @@ class Waterrower extends EventEmitter {
         this.emit('session-start', this, id);
 	}
 
-	getSessionId() {
-		return this.sessionid;
-	}
-
 	stopSession(mac, sessionid) {		
+        logDebug("Stopping session %s", sessionid);
         const payload = Buffer.allocUnsafe(3);
         payload[0] = mqttutil.STOP_SESSION_CMD;    // CMD Stop Session
         payload[1] = (sessionid >> 8) & 0xFF;      // HighByte Session
         payload[2] = sessionid & 0xFF;             // Lowbyte Session
         this.mqtt.publish(mac, payload);
-        this.sessionid = null;
         this.emit('session-stop', this, sessionid);
 	}
 }

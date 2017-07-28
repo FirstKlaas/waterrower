@@ -6,8 +6,12 @@ each device in devices
       div.small #{device.mac}
     
     if (user.isadmin == 1)
-      .item.clickable(onclick='showDeviceForm(' + device.id + ')')
+      .item.clickable.fixed80(onclick='showDeviceForm(' + device.id + ')')
         i(class="fa fa-edit",aria-hidden="true")
+      .item.clickable.fixed80(onclick='deleteDevice(' + device.id + ')')
+        i(class="fa fa-trash-o",aria-hidden="true")  	
     else
-     .item   
+      .item   
+
+
 

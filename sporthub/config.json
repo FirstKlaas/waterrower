@@ -12,6 +12,6 @@
 		"static_dir" : "public",
 		"database" : "db/sporthub_dev.db",
 		"json_content_type" : "application/json",
-	    "mqttserver" : "blender"
+                "mqttserver" : "localhost"
     }
 }

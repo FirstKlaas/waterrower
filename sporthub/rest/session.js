@@ -35,15 +35,33 @@ var exports = module.exports = (app) => {
 	});
 
 	router.get('/delete/:id', function (req, res) {
-	    backend.deleteSession(req.params.id)
+		backend.getSession(req.params.id)
+		.then( session => {
+			// Is the session to be deleted owned 
+			// by the logged in user or is user admin?
+			if (session.user_id === req.user.id || req.user.isadmin === 1) {
+				return backend.deleteSession(req.params.id);
+			} else {
+				return Promise.reject("Session not owned by user and user is no admin.")
+			}
+		})
 	    .then(() => res.json({"sessionid":req.params.id}))
 	    .catch(err => res.status(500).json({"err":err}));
 	});
 
 
+	/**
+	*
+	**/
 	router.get('/active', function (req, res) {
-	    backend.getActiveSessions()
-	    .then(data => res.json({"sessions":data}))
+	    backend.getActiveSessionForUser(req.user.id)
+	    .then(data => {
+	    	if (data) {
+	    		res.json({"session":data});
+	    	} else {
+	    		res.json({"user":req.user});
+	    	}
+	    })
 	    .catch(er => res.status(500).json({"err":err}));
 	});
 
@@ -65,14 +83,20 @@ var exports = module.exports = (app) => {
 	**/
 	router.get('/start/:deviceid', function(req, res) {
 	    let device = null;
-
-	    backend.getDevice(req.params.deviceid)
+	    if (!req.user) {
+	    	logError("No user. Cannot start a new session.")
+	    }
+    	logDebug("Starting session for user %d on device %d", req.user.id, req.params.deviceid);
+	
+	    backend.device.get(req.params.deviceid)
 	    .then(device => {
 	    	if (!device) {
+	    		logError("No device with id %d in database. Shouldn't be the case.", req.params.deviceid);
 	    		res.status(404).json({"err" : "No such device"})
 	    	} else {
 	    		backend.startSession(req.user.id,req.params.deviceid)
 	    		.then(session => {
+	    			logDebug("Started new session: %o",session)
 	    			res.json({"session" : session});
                     waterrower.startSession(device.mac,session.id);
 	                        

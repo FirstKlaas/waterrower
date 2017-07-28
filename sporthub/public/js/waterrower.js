@@ -1,6 +1,10 @@
-var socket    = io();
+let socket    = io();
 var session   = null;
 var device    = null;
+
+socket.on("connect", () => {
+	console.log("Socket connected");
+})
 
 function formatDistance(value) {
 	if (value < 1000) return numeral(value).format('0,0.00') + ' m';
@@ -8,16 +12,11 @@ function formatDistance(value) {
 }
 
 function stopSession() {
-	console.log(session);
-	console.log(device);
-
 	if(!session) {
 		console.log("No session to stop");
 		return;
 	}
-	console.log("Stopping session " + session.id);
 	$.getJSON( "/rest/session/stop/" + session.id, function( data ) {
-		session = null;
 	});
 }
 
@@ -37,13 +36,8 @@ function setDevice(id, clb) {
 function voidCall() {}
 
 function startSession() {
-	console.log('start session');
-	if (!device) return;
-	console.log('has device');
 	if (session) return;
-	console.log('has no session');
-	console.log("/rest/session/start/" + device.id);
-	
+	session = {};
 	var elem = $('#startstop');
 	elem.removeClass('fa-play-circle-o');
 	elem.removeClass('fa-stop-circle-o');
@@ -53,9 +47,6 @@ function startSession() {
 	});			
 
 	$.getJSON( "/rest/session/start/" + device.id, function( data ) {
-		session = data.session;
-		console.log(session);
-		console.log(device);
 	});
 }
 
@@ -182,34 +173,30 @@ function showSessions() {
 	);
 }
 
-
 function showLive() {
 	if (device) {
 		$('#content').load('/livedata.html', function() {
 			$('#pagetopic').text('Live Data');
-			setupActions();
+			checkForActiveSession().then(s => {
+				console.log("Checked for active session: " + s);
+				session = s;
+				setupActions();
+			})
 		});
 	};
 }
 
-function startStopSession() {
-	if (session == null) {
-		startSession();
-	} else {
-		stopSession();
-	}
-}
-
 function setupActions() {
+	let elem = $('#startstop');
 	if (session) {
-		var elem = $('#startstop');
+		elem.removeClass('fa-cog');
 		elem.removeClass('fa-play-circle-o');
 		elem.addClass('fa-stop-circle-o');
 		elem.one('click',function() {
 			stopSession();
 		});			
 	} else {
-		var elem = $('#startstop');
+		elem.removeClass('fa-cog');
 		elem.removeClass('fa-stop-circle-o');
 		elem.addClass('fa-play-circle-o');
 		elem.one('click',function() {
@@ -221,9 +208,10 @@ function setupActions() {
 function checkForActiveSession() {
 	return new Promise((resolve, reject) => {
 		$.getJSON( "/rest/session/active", function( data ) {
+			console.log("active session rest call");
 			console.log(data);
-			if (data && data.sessions) {
-				resolve(data.sessions[0]);
+			if (data && data.session) {
+				resolve(data.session);
 			} else {
 				resolve(null);
 			}
@@ -232,46 +220,181 @@ function checkForActiveSession() {
 }
 
 function selectDevice(id) {
-	if (session) {
-		alert('Session is running');
-	} else {
+	checkForActiveSession()
+	.then( session => {
+		if (session) return Promise.reject(new Error("Session already running"));
+		return checkForRunningDevice(id);
+	})
+	.then(data => {
+		if (data && data.active) return Promise.reject(new Error("Device is busy. Cannot be selected."));
 		setDevice(id,
 			function(data) {
 				showLive();
 			}
-		)
-	}	
+		)				
+	})
+	.catch(err => console.error(err));	
 }
+
+function checkForRunningDevice(id) {
+	return new Promise((resolve, reject) => {
+		$.getJSON( "/rest/device/active/" + id, function( data ) {
+			console.log("Checked for running device");
+			console.log(data);
+			return resolve(data);
+		}).fail( jqXHR => {
+			return resolve(null);
+		});
+	})
+}
+
+function checkForActiveDevice() {
+	return new Promise((resolve,reject) => {
+		$.getJSON( "/active/device", function( data ) {
+			if (data && data.device) {
+				return resolve(data.device);
+			} 
+			return resolve(null);
+		}).fail( jqXHR => {
+			return resolve(null);
+		})	
+	})	
+} 
+
+function getMe() {
+	return new Promise((resolve, reject) => {
+		$.getJSON( "/rest/user/me", function( user ) {
+			return resolve(user);
+		}).fail( jqXHR => {
+			return resolve(null);
+		})
+	});
+}
+
+var nsp_user = null;
 
 function onInit() {
+	console.log("Document Ready");
+	checkForActiveDevice().then(dev => {
+		if (dev) { device = dev };
+	}).catch(err => console.log(err));
+
+	initSocketIO();
+
+/**
+	io('/klaas').on('session-start',
+		function(data) {
+			console.log("io(/klaas).session.start");
+			session = data;
+			setupActions();
+		}
+	);
+
+	io('/klaas').on('session-stop',
+		function(data) {
+			console.log("io(/klaas).session-stop");
+			session = null;
+			setupActions();
+		}	
+	);
+
+	io('/klaas').on('message', 
+		function(data) { 
+			console.log("io(/klaas).message");
+			currentSession = data.sessionid;
+			$('#dd').text(formatDistance(data.distance));
+			$('#speed').text(numeral(data.speed).format('0,0.00'));
+			$('#max_speed').text(numeral(data.max_speed).format('0,0.00'));
+			$('#avg_speed').text(numeral(data.avg_speed).format('0,0.00'));
+			$('#ds').text(numeral(data.seconds).format('00:00:00'));
+			$('#ticks').text(data.ticks);
+		}
+	);
+
+	socket.on('session-start',
+		function(data) {
+			console.log("io.session.start");
+			session = data;
+			setupActions();
+		}
+	);
+
+	socket.on('session-stop',
+		function(data) {
+			console.log("io.session-stop");
+			session = null;
+			setupActions();
+		}	
+	);
+
+	socket.on('message', 
+		function(data) { 
+			console.log("io.message");
+			currentSession = data.sessionid;
+			$('#dd').text(formatDistance(data.distance));
+			$('#speed').text(numeral(data.speed).format('0,0.00'));
+			$('#max_speed').text(numeral(data.max_speed).format('0,0.00'));
+			$('#avg_speed').text(numeral(data.avg_speed).format('0,0.00'));
+			$('#ds').text(numeral(data.seconds).format('00:00:00'));
+			$('#ticks').text(data.ticks);
+		}
+	);
+**/		
 }
 
-socket.on('message', 
-	function(data) { 
-		//console.log(data)
-		currentSession = data.sessionid;
-		$('#dd').text(formatDistance(data.distance));
-		$('#speed').text(numeral(data.speed).format('0,0.00'));
-		$('#max_speed').text(numeral(data.max_speed).format('0,0.00'));
-		$('#avg_speed').text(numeral(data.avg_speed).format('0,0.00'));
-		$('#ds').text(numeral(data.seconds).format('00:00:00'));
-		$('#ticks').text(data.ticks);
+var nsp_user = null;
+
+function initSocketIO() {
+	console.log("init nsp_user");
+	if (nsp_user) {
+		console.log("nsp_user already initialized");
+	}
+	getMe().then( user => {
+		if (!user) {
+			console.log("Not logged in. No user namespace for socket connection.")
+			return;
+		}
+		
+		if(nsp_user) return;
+		console.log("Init socket namespace /" + user.login);
+		let nsp = '/' + user.login;
+
+		nsp_user = io(nsp);
+		nsp_user.emit('bingo',{});
+		
+		io(nsp).on('connect', function(data) {
+			console.log('nsp connected');
+		})
+		
+		io(nsp).on('session-start',
+			function(data) {
+				console.log("io('" + nsp + "').session-start");
+				session = data;
+				setupActions();
+			}
+		);
+
+		io(nsp).on('session-stop',
+			function(data) {
+				console.log("io('" + nsp + "').session-stop");
+				session = null;
+				setupActions();
+			}
+		);
+
+		io(nsp).on('message', 
+			function(data) { 
+				console.log("io('" + nsp + "').message");
+				currentSession = data.sessionid;
+				$('#dd').text(formatDistance(data.distance));
+				$('#speed').text(numeral(data.speed).format('0,0.00'));
+				$('#max_speed').text(numeral(data.max_speed).format('0,0.00'));
+				$('#avg_speed').text(numeral(data.avg_speed).format('0,0.00'));
+				$('#ds').text(numeral(data.seconds).format('00:00:00'));
+				$('#ticks').text(data.ticks);
+			}
+		);
 	});
+}
 
-socket.on('session-start',
-	function(data) {
-		console.log('io=> session-start ' + JSON.stringify(data));
-		setupActions();
-	}
-);
-
-socket.on('session-stop',
-	function(data) {
-		session = null;
-		console.log('io=> session-stop ' + JSON.stringify(data));
-		setupActions();
-	}
-);
-
-
-
+$().ready(onInit);

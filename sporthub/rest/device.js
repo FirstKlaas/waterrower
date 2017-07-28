@@ -14,7 +14,7 @@ var exports = module.exports = (app) => {
 	router.use(authUtil.isLoggedInForRest);
 	
 	router.get('/active/:id', function(req, res) {
-		backend.isDeviceActive(req.params.id)
+		backend.device.isDeviceActive(req.params.id)
 		.then( sessionid => {
 			if (sessionid) {
                 res.json({
@@ -31,7 +31,7 @@ var exports = module.exports = (app) => {
 	});
 
 	router.get('/:id', function(req, res) {
-	    backend.getDevice(req.params.id)
+	    backend.device.get(req.params.id)
 	    .then(device => {
 	    	if (device) {
                 res.json({"device": device});
@@ -42,7 +42,7 @@ var exports = module.exports = (app) => {
 	});
 
 	router.get('/', function(req, res) {
-	    backend.getDevices()
+	    backend.device.getAll()
     	.then (device => res.json({"device": device}))	            
 	    .catch(err =>  res.status(500).json({"err": err}));  
 	});

@@ -40,8 +40,11 @@ CREATE TABLE IF NOT EXISTS "device" (
 );`;
 
 const bcrypt = require('bcrypt-nodejs')
+
 const logDebug = require('debug')('waterrower:database:debug')
 const logError = require('debug')('waterrower:database:error')
+
+const dbDevice = require('debug');
 
 var exports = module.exports = (db,twitter) => {
 
@@ -57,8 +60,10 @@ var exports = module.exports = (db,twitter) => {
 
 class Backend {
 	constructor (db,twitter) {
-		this.db = db;
+		this.db      = db;
 		this.twitter = twitter;
+		this.device  = require('./backend/backend-device.js')(this);
+		this.session = require('./backend/backend-session.js')(this);
 	}
 
 	getUsers() {
@@ -70,9 +75,11 @@ class Backend {
 			this.db.each("SELECT * FROM user",
 				function(err, row) {
 					if (err) return reject(err);
+					/**
 					if (row.twitter) {
 						promises.push(self.twitter.getUserInfo(row.twitter));
 					}
+					**/
 					users.push(row);
 				},
 				function(err,count) {
@@ -99,7 +106,7 @@ class Backend {
 		});
 	}
 
-	getUser(id,twitter=true) {
+	getUser(id,twitter=false) {
 		let self = this;
 		return new Promise((resolve,reject) => {
 		    self.db.get("SELECT * FROM user WHERE id=?", [id], (err, row) => {
@@ -144,38 +151,6 @@ class Backend {
 				)
 			})
 			.catch( err => reject(err));
-		})
-	}
-
-	updateDevice(devicedata) {
-		let self = this;
-		return new Promise((resolve,reject) => {
-			if (!devicedata || !devicedata.mac) {
-				logError("Cannot update device data. Provided data is %o", devicedata); 
-				return reject(new Error('No valid device data'));
-			}
-			logDebug("Fetching device %s from database ", devicedata.mac);
-
-			self.getDeviceByMacAddress(devicedata.mac)
-			.then( device => {
-				if (!device) {
-					logError("No such device: %s ", devicedata.mac);
-					return reject(new Error("No such device: " + devicedata.mac));
-				} else {					
-					logDebug("Updating device in database");
-					self.db.run('UPDATE device SET human=? WHERE mac=?',
-						[devicedata.human,devicedata.mac],
-						function(err) {
-							if (err) return reject(err);
-							logDebug("Update succeded. Returning updated device information.");
-							self.getDeviceByMacAddress(devicedata.mac)
-							.then( device => resolve(device))	
-							.catch( err => reject(err));					
-						}
-					)
-				}
-			})
-			.catch( err => reject(err));		
 		})
 	}
 
@@ -256,46 +231,6 @@ class Backend {
 		})
 	}
 
-	getSessions() {
-		return new Promise((resolve,reject) => {
-			this.db.all("SELECT * FROM session ORDER BY start DESC", (err, rows) => {
-		    	if (err) return reject(err);
-				resolve(rows);
-		    });			
-		})
-	}
-
-	getSession(id) {
-	    return new Promise((resolve,reject) => {
-			this.db.get("SELECT * FROM session WHERE id=?", [id], (err, row) => {
-				if (err) return reject(err);
-				resolve(row);
-	    	});
-	    });
-	}
-
-	deleteSession(id) {
-		return new Promise((resolve,reject) => {
-			this.db.parallelize(() => {
-				this.db.run("DELETE FROM session_entry WHERE session_id=?", [id]);
-				this.db.run("DELETE FROM session WHERE id=?", [id]);
-				
-			});
-			resolve();
-			
-		});
-	}
-
-	getActiveSessions() {
-		return new Promise((resolve,reject) => {
-		    this.db.all("SELECT * FROM session WHERE session.active=1", (err, rows) => {
-				if (err) return reject(err);
-	            resolve(rows);
-	    	});
-		});
-	}
-
-
 	getHallOfFameDistance() {
 		return new Promise((resolve, reject) => {
 			this.db.all("select sum(distance) as distance, user_id, session.id as session_id, user.firstname, user.lastname from session, user where session.user_id = user.id group by user_id order by distance desc",
@@ -318,175 +253,49 @@ class Backend {
 		})
 	}
 
-	stopSession(id) {
-		let self = this;
-		return new Promise((resolve, reject) => {
-			self.getSession(id)
-			.then(session => {
-				if (!session) return resolve(null);
-				if (session.active === 0) return resolve(null);
+	getSessions() {
+		return this.session.getSessions();
+	}
 
-				self.getDevice(session.device_id)
-				.then(device => {
-					if (!device) return reject(new Error("No such device"));
-					self.db.run("UPDATE session SET active=0, end=CURRENT_TIMESTAMP WHERE id=?",[id],
-						err => {
-							if (err) return reject(err);
-							resolve(device);
-						}
-					);								
-				}).catch( err => reject(err));
-			})
-			.catch(err => reject(err));
-		});
+	getSession(id) {
+	    return this.session.getSession(id);
+	}
+
+	deleteSession(id) {
+		return this.session.deleteSession(id);
+	}
+
+	getActiveSessionForUser(id) {
+		return this.session.getActiveSessionForUser(id);
+	}
+
+	getActiveSessions() {
+		return this.session.getActiveSessions();
+	}
+
+	stopSession(id) {
+		return this.session.stopSession(id);
 	}
 
 
 	stopActiveSessions() {
-		let self = this;
-		return new Promise((resolve,reject) => {
-		    this.db.all("SELECT * FROM session WHERE session.active=1", function (err, rows) {
-				if (err) {
-	            	reject(err);
-	        	} else {
-	        		let promises = [];
-	        		rows.forEach((session) => {
-	        			promises.push(self.stopSession(session.id));
-	        		})
-	        		Promise.all(promises).then(values => {
-	        			resolve(values);
-	        		}).catch(reason => { 
-  						reject(reason);
-					});
-	            }
-	    	});
-		});
+		return this.session.stopActiveSessions();
 	}
 
 	startSession(userid, deviceid) {
-		let database = this.db;
-		let self = this;
-		return new Promise((resolve, reject) => {
-			self.isDeviceActive(deviceid).then(
-				session => {
-					if (session) return resolve(session);
-					database.run("INSERT into session(user_id,device_id, active) VALUES (?,?,1)",[userid,deviceid],
-						function(err) {
-							if (err) return reject(new Error(err));
-							self.getSession(this.lastID).then(
-								session => {
-									if (session) return resolve(session);
-									reject(new Error('Could not create new Session'));
-								}
-							).catch ( err => reject(err));
-						}
-					)	
-				}
-			).catch( err => reject(err));	
-		})
-	}
-
-	getDevice(id) {
-		return new Promise((resolve,reject) => {			
-			this.db.get("SELECT * FROM device WHERE id=?", [id], 
-				function(err,row) {
-					if (err) { 
-						reject(err);
-					} else {
-						resolve(row);
-					}
-				}
-			)
-		})
-	}
-
-	getDeviceByMacAddress(addr) {
-		return new Promise((resolve,reject) => {			
-			this.db.get("SELECT * FROM device WHERE mac=?", [addr], 
-				function(err,row) {
-					if (err) { 
-						reject(err);
-					} else {
-						resolve(row);
-					}
-				}
-			)
-		})
-	}
-
-	addNewDevice(addr) {
-		return new Promise((resolve,reject) => {
-			this.db.run("INSERT INTO device(mac, human) VALUES (?,?)", [addr,addr], err => {
-				if (err) {
-					logError("Could not insert new device " + addr);
-					logError("%O",err);
-					return reject(new Error("Could add new device " + addr));
-				}
-				resolve (this.changes);
-			})
-		})
-	}
-
-	getDevices() {
-		return new Promise((resolve, reject) => {
-			this.db.all("SELECT * FROM device ORDER BY human", 
-				(err,rows) => {
-					if (err) {
-						reject(err);
-					} else {
-						resolve(rows);
-					}
-				}
-			)
-		});
-	}
-
-	isDeviceActive(deviceid, onError, onSuccess) {
-		return new Promise((resolve, reject) => {
-			this.db.get("SELECT id FROM session WHERE device_id=? AND active=1", [deviceid], 
-				(err,row) => {
-					if (err) return reject(err);
-					return resolve(row);
-				}
-			);	
-		});
+		return this.session.startSession(userid, deviceid);
 	}
 
 	getSessionEntries(sessionid) {
-		return new Promise((resolve, reject) => {
-			let result = [];
-			this.db.each("SELECT * FROM session_entry WHERE session_id=? ORDER BY seconds ASC",[sessionid], 
-				(err, row) => {
-					if (err) { 
-						reject(err);
-					} else {
-            			result.push(row);
-            		}
-            	},
-            	(err, count) => {
-					if (err) { 
-            			reject(err);
-            		} else {
-            			resolve(result);
-            		}	
-            	}
-    		);	
-		})
+		return this.session.getSessionEntries(sessionid);
 	}
 
 	getUserSessions(userid) {
-		return new Promise((resolve, reject) => {
-		    this.db.all("SELECT * FROM session WHERE user_id=? ORDER BY start",[userid], 
-		    	(err, rows) => {
-					if (err) return reject(err);
-	            	resolve(rows);
-	            }
-	    	);			
-		})
+		return this.session.getUserSessions(userid);
 	}
 
 	insertSessionEntry(data) {
-        this.db.run("INSERT into session_entry(seconds,avg_speed, speed, distance, session_id) VALUES (?,?,?,?,?)",[data.seconds,data.avg_speed,data.speed,data.distance,data.sessionid]);
-        this.db.run("UPDATE session SET distance=?, max_speed=?, avg_speed=?, end=CURRENT_TIMESTAMP WHERE id=?", [data.distance, data.max_speed, data.avg_speed, data.sessionid]);
+        return this.session.insertSessionEntry(data);
 	}
 }
+

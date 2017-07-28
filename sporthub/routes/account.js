@@ -9,7 +9,11 @@ var exports = module.exports = (passport, backend) => {
 	const router = express.Router();
 
 	router.get('/', (req,res) => {
-	    res.render('login', {message: req.flash('loginMessage')});
+		if (req.user) {
+			res.redirect("/main");
+		} else {
+	    	res.render('login', {message: req.flash('loginMessage')});
+	    }
 	})
 
 	router.get('/logout', authUtil.isLoggedIn, (req,res) => {

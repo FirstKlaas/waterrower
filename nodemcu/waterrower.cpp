@@ -23,16 +23,16 @@ CommandPtr head = NULL;
    This ensures that any read to this variables will be done in memory and not on behalf of a
    cached value.
 */
-volatile unsigned long tick      = 0;         // Counts the signals coming from the waterrower
-volatile unsigned long lasttick         = 0;         // Saves the last tick
+volatile unsigned long tick             =   0;       // Counts the signals coming from the waterrower
+volatile unsigned long lasttick         =   0;       // Saves the last tick
 volatile unsigned long meter_per_second = 0.0;       // As the name says. Value for meter per second
-volatile unsigned long seconds          = 0;         // Seconds the workout is running
+volatile unsigned long seconds          =   0;       // Seconds the workout is running
 volatile float distance                 = 0.0;       // Distance in meters for this workout
 
-unsigned long last_seconds = 0;              // Which 'seconds' value was send the last time
+unsigned long last_seconds              =   0;       // Which 'seconds' value was send the last time
 
-volatile unsigned long avg_speed_sum    = 0;
-volatile unsigned long max_speed        = 0;
+volatile unsigned long avg_speed_sum    =   0;
+volatile unsigned long max_speed        =   0;
 
 /**
    4.805 ticks (interrupts) is equal to one meter distance.
@@ -41,17 +41,18 @@ const float ratio = 4.805;
 
 volatile long lastDebounceTime     =  0;      // the last time the output pin was toggled in millis
 const unsigned long debounceDelay  = 20;      // Duration in millis to ignore interrupts
-// slower than STOP_SPEED before a new session can start.
+
+// Flag indicating wether we are currently measure things or not.
 volatile boolean measuring_running = false;
 
 byte mac[6];                                  // Buffer for storing the MAC Address.
 uint8_t data[16];                             // Waterrower Data Array
                                               // Byte 0-1: Session ID
                                               // Byte 2-5: Distance
-char clientid[18];
+char clientid[18];                            // Buffer for the client ID
 
-uint8_t sessionid_low  = 0;                      // Session ID we got from the server (Low Byte)
-uint8_t sessionid_high = 0;                      // Session ID we got from the server (High Byte)
+uint8_t sessionid_low  = 0;                   // Session ID we got from the server (Low Byte)
+uint8_t sessionid_high = 0;                   // Session ID we got from the server (High Byte)
 
 boolean using_fake_waterrower = true;
 

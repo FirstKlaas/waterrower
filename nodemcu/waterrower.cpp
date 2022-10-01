@@ -1,5 +1,36 @@
 #include "waterrower.h"
 /**
+
+Waterrower Write Messages
+=========================
+
+
+  T: /sportshub/waterrower/plain/session
+  P: "new" [text]
+  D: Resets the session values like max speed and distance
+
+  T: /sportshub/waterrower/plain/session
+  P: "pause" [text]
+  D: Pauses measuring for the current session or unpauses it. If no session 
+     is active, doesn't do anything. 
+
+
+Waterrower Read Messages
+========================
+  T: /sportshub/waterrower/plain/speed
+  P: Current speed in meter per seconds as text float 
+
+  T: /sportshub/waterrower/plain/maxspeed
+  P: Current maximum speed within this session in meter per seconds as text float. If no session is active, returns always 0 
+
+  T: /sportshub/waterrower/plain/distance
+  P: Distance within this session. If no session is active, returns always 0 
+
+  T: /sportshub/waterrower/plain/avgspeed
+  P: Average speed within the sseion. If no session is active, returns always 0 
+
+  T: /sportshub/waterrower/plain/seconds
+  P: Time in seconds, the current session is running. If no session is active, returns always 0 
 */
 
 #define DEBUG
@@ -43,7 +74,7 @@ volatile long lastDebounceTime     =  0;      // the last time the output pin wa
 const unsigned long debounceDelay  = 20;      // Duration in millis to ignore interrupts
 
 // Flag indicating wether we are currently measure things or not.
-volatile boolean measuring_running = false;
+volatile boolean session_active = false;
 
 byte mac[6];                                  // Buffer for storing the MAC Address.
 uint8_t data[16];                             // Waterrower Data Array
@@ -51,46 +82,9 @@ uint8_t data[16];                             // Waterrower Data Array
                                               // Byte 2-5: Distance
 char clientid[18];                            // Buffer for the client ID
 
-uint8_t sessionid_low  = 0;                   // Session ID we got from the server (Low Byte)
-uint8_t sessionid_high = 0;                   // Session ID we got from the server (High Byte)
-
-boolean using_fake_waterrower = true;
-
 #ifdef DEBUG
 char message[80];                             // Buffer for the message
 #endif
-
-
-void setSession(uint8_t high, uint8_t low) {
-  sessionid_high = high;
-  sessionid_low  = low;
-}
-
-boolean isUsingFakeDevice(void) {
-  return using_fake_waterrower;
-}
-
-void setUsingFakeDevice(boolean val) {
-  using_fake_waterrower = val;
-}
-
-uint8_t getSessionHigh() {
-  return sessionid_high;
-}
-
-uint8_t getSessionLow() {
-  return sessionid_low;
-}
-
-
-/*
-   true if measuring currently is running, false else.
-   If not measuring, no values will be published to
-   the mqtt server.
-*/
-boolean is_measuring() {
-  return measuring_running;
-}
 
 const char hex[17] = "0123456789ABCDEF";
 
@@ -117,13 +111,9 @@ void reconnect() {
       Serial.println("connected");
 #endif
       // Once connected, publish an announcement...
-      client.publish("sportshub", "Waterrower connected");
-      client.publish("sportshub/device/connect", getClientID());
-
-      String topic = String();
-      topic += getClientID();
-      topic += "/#";
-      client.subscribe(topic.c_str());
+      client.publish("/sportshub/device/connect", getClientID());
+      // ... and subscribe to a fixed topic
+      client.subscribe("/sportshub/waterrower/#");
 
     } else {
 #ifdef DEBUG
@@ -181,15 +171,15 @@ void startWIFI(const char* ssid, const char* password) {
 
 /**
    The ISR that is called every time the waterrower gives a signal.
-   Ticke is updated. A debounce time is used to avoid ticks that come
+   "tick" gets incremented each time. A debounce time is used to avoid ticks that come
    frome bounces.
 */
 void tick_ISR(void) {
   unsigned long m = millis();
   if (m - lastDebounceTime > debounceDelay) {
     tick++;
+    lastDebounceTime = m;
   }
-  lastDebounceTime = m;
 }
 
 void startISR() {
@@ -234,10 +224,10 @@ void printPayloadHex(byte* payload, unsigned int length) {
    Activates measuring. If not already measuring, this
    also resets internal variables for measurement.
 */
-void startMeasuring() {
-  if (measuring_running) return;
+void startSession() {
+  if (session_active) return;
   reset();
-  measuring_running = true;
+  session_active = true;
   lastDebounceTime = millis();
   startISR();
 }
@@ -247,12 +237,11 @@ void startMeasuring() {
    The ISR will be detached, so no more ticks are counted.
    All variables will be resetted.
 */
-void stopMeasuring() {
-  if (!measuring_running) return;
+void stopSession() {
+  if (!session_active) return;
   stopISR();
   reset();
-  measuring_running = false;
-  meter_per_second = 0.0;
+  session_active = false;
 }
 
 /**
@@ -267,6 +256,7 @@ void reset() {
   distance = 0.0;
   avg_speed_sum = 0;
   max_speed = 0;
+  meter_per_second = 0;
 }
 
 /**
@@ -296,27 +286,23 @@ void setupMqtt(const char* server) {
   client.setServer(server, 1883);
   client.setCallback(callback);
   //client.publish("sportshub/device/register", mac, 6);
-  client.publish("sportshub/device/register", clientid);
+  //client.publish("sportshub/device/register", clientid);
 }
 
-void logToSportshub(LEVEL lvl, const char* message) {
-  if (client.connected()) {
-    switch (lvl) {
-      case DEBUG_LEVEL:
-        client.publish("sportshub/log/debug", message);
-        break;
-      default:
-        break;
-    }
-  } else {
-#ifdef DEBUG
-    Serial.println("Local logging message");
-#endif
-  }
 
-}
+void sendWaterrowerDataPlain(void) {
+  unsigned long m_seconds  = getSeconds();
+  unsigned long m_tick     = getTicks();
+  unsigned long m_avg_speed_sum = avg_speed_sum;
+  uint8_t index = 0;
+   
+  float m_meter_per_second = getMeterPerSecond();
 
-void sendWaterrowerData(void) {
+  client.publish("/sportshub/waterrower/plain/speed", )
+} 
+
+
+void sendWaterrowerDataBinary(void) {
   // save the seconds value for this method to avoid race conditions
   unsigned long m_seconds  = getSeconds();
   unsigned long m_tick     = getTicks();
@@ -334,22 +320,16 @@ void sendWaterrowerData(void) {
   }
 
   if (client.loop()) {
-    if (is_measuring()) { //
+    if (session_active) { //
 #ifdef DEBUG
       //Serial.print(".");
 #endif
       if (m_seconds > getLastSeconds()) { //
 
-        if (isUsingFakeDevice()) {
-          m_meter_per_second = random(100);
-          m_tick = random(32000);
-        }
         unsigned long m_speed    = (unsigned long) (m_meter_per_second);
         unsigned long m_distance = getDistance(m_tick);
         unsigned long m_avg_speed = (unsigned long) (m_avg_speed_sum / m_seconds);
         
-        data[index++]  = getSessionHigh();
-        data[index++]  = getSessionLow();
         data[index++]  = highByte(m_tick);
         data[index++]  = lowByte(m_tick);
         data[index++]  = highByte(m_seconds);
@@ -370,7 +350,7 @@ void sendWaterrowerData(void) {
         Serial.println(message);
 #endif
 
-        client.publish("sportshub/data", data, 14);
+        client.publish("sportshub/waterrower/binary/data", data, 14);
         markTime(m_seconds);
       } else {
 #ifdef DEBUG
@@ -396,7 +376,7 @@ void sendWaterrowerData(void) {
    seconds, meter_per_second, lasttick
 */
 void timer_0_ISR(void) {
-  if (is_measuring()) {
+  if (session_active) {
     seconds++;
     unsigned long current_tick = tick;
     distance = (float) (current_tick - lasttick);
